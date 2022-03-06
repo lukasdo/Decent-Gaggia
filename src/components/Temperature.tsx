@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React from 'react';
 import './../App.css';
 import Timer from "./Timer";
 
@@ -11,7 +11,7 @@ interface IState {
 interface ITemp {
     temp: number[];
 }
-class Temperature extends React.Component<IProps,IState> {
+class Temperature extends React.Component<IProps, IState> {
     constructor(props: IProps) {
         super(props);
         this.state = {
@@ -20,14 +20,14 @@ class Temperature extends React.Component<IProps,IState> {
     }
 
     componentDidMount() {
-        fetch('/temp')
-            .then(response => response.text())
-            .then(state => {
-                let bla: ITemp;
-                    // this.setLedState(state);
-                bla = JSON.parse(state) as ITemp;
-                    console.log(bla.temp);
-                });
+        // fetch('/temp')
+        //     .then(response => response.text())
+        //     .then(state => {
+        //         let bla: ITemp;
+        //             // this.setLedState(state);
+        //         bla = JSON.parse(state) as ITemp;
+        //             console.log(bla.temp);
+        //         });
     }
 
     // handleStateChange(ledOn) {
@@ -39,9 +39,9 @@ class Temperature extends React.Component<IProps,IState> {
         return (
             <div>
                 <div>
-                    <p>
+                    {/* <p>
                         Temp: {this.state.temp}
-                    </p>
+                    </p> */}
                 </div>
                 <div>
                     <Timer></Timer>

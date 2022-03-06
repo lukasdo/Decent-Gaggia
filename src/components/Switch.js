@@ -19,15 +19,15 @@ class Chart extends Component {
   }
 
   componentDidMount() {
-    fetch('/led')
-      .then(response => response.text())
-      .then(state => this.setLedState(state));
+    // fetch('/led')
+    //   .then(response => response.text())
+    //   .then(state => this.setLedState(state));
   }
 
   handleStateChange(ledOn) {
-    fetch('/led', { method: 'PUT', body: ledOn ? '0' : '1' })
-      .then(response => response.text())
-      .then(state => this.setLedState(state));
+    // fetch('/led', { method: 'PUT', body: ledOn ? '0' : '1' })
+    //   .then(response => response.text())
+    //   .then(state => this.setLedState(state));
   }
   render() {
     return (

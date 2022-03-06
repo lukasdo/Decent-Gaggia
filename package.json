@@ -7,15 +7,14 @@
     "@emotion/styled": "^11.6.0",
     "@material/react-tab-bar": "^0.15.0",
     "@mui/material": "^5.4.1",
-    "chart.js": "^3.7.0",
-
-    "react-chartjs-2": "2.9.0",
-    "react": "^17.0.0",
-
     "chart.js": "2.9.3",
+    "http-proxy-middleware": "^2.0.3",
+    "react": "^17.0.0",
+    "react-chartjs-2": "2.9.0",
     "react-dom": "^16.8.4",
     "react-scripts": "2.1.8",
     "react-toggle-button": "^2.2.0",
+    "svg-gauge": "^1.0.6",
     "typescript": "^4.5.5"
   },
   "scripts": {
@@ -37,7 +36,7 @@
   "devDependencies": {
     "awot-scripts": "0.0.28"
   },
-  "proxy": "http://192.168.2.110",
+  "proxy": "http://192.168.2.116",
   "awot-static": {
     "sources": "./build",
     "indexFile": "index.html",

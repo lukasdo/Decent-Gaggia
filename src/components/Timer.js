@@ -33,7 +33,7 @@ const Timer = () => {
             </div>
             <div className="row">
 
-                <Button mat-button color="primary"  onClick={toggle}>
+                <Button mat-button color="primary" onClick={toggle}>
                     {isActive ? 'Pause' : 'Start'}
                 </Button>
                 <Button className="button" onClick={reset}>
