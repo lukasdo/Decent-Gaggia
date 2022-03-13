@@ -1,11 +1,11 @@
-import * as React from 'react';
-import PropTypes from 'prop-types';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Temperature from "./Temperature";
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import Typography from '@mui/material/Typography';
+import PropTypes from 'prop-types';
+import * as React from 'react';
 import Chart from "./Chart";
+import Timer from './Timer';
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -35,7 +35,7 @@ TabPanel.propTypes = {
 function a11yProps(index) {
     return {
         id: `simple-tab-${index}`,
-        'aria-controls':  `full-width-tabpanel-${index}`,
+        'aria-controls': `full-width-tabpanel-${index}`,
     };
 }
 
@@ -51,18 +51,14 @@ export default function BasicTabs() {
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={value} onChange={handleChange} centered aria-label="basic tabs example">
                     <Tab label="Basics" {...a11yProps(0)} />
-                    <Tab label="Shots" {...a11yProps(1)} />
-                    <Tab label="Item Three" {...a11yProps(2)} />
+                    <Tab label="Shot Timer" {...a11yProps(1)} />
                 </Tabs>
             </Box>
             <TabPanel value={value} index={0}>
                 <Chart></Chart>
             </TabPanel>
             <TabPanel value={value} index={1}>
-                <Temperature></Temperature>
-            </TabPanel>
-            <TabPanel value={value} index={2}>
-                Item Three
+                <Timer></Timer>
             </TabPanel>
         </Box>
     );

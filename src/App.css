@@ -36,3 +36,36 @@
   font-size: 3rem;
   padding: 2rem;
 }
+
+.row {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: row;
+  /* flex-wrap: wrap; */
+  width: 100%;
+}
+.col-1 {
+  display: flex;
+  flex-direction: column;
+  /* flex-basis: 100%; */
+  flex: 1;
+  align-self: flex-start;
+}
+.col-3 {
+  display: flex;
+  flex-direction: column;
+  /* flex-basis: 100%; */
+  flex: 2;
+  align-self: flex-start;
+}
+
+.container {
+  width: 90%;
+}
+
+@media (max-width: 600px) {
+  .row{
+      flex-direction: column;
+  }
+}
