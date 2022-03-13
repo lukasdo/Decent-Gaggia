@@ -22,80 +22,107 @@ WiFiServer server(8080);
 Application app;
 AsyncWebServer webSocketServer(80);
 AsyncWebSocket ws("/ws");
+hw_timer_t *timer = NULL;
 
-AsyncWebSocketClient * globalClient = NULL;
+const unsigned int windowSize = 1000;
+unsigned int isrCounter = 0; // counter for ISR
+AsyncWebSocketClient *globalClient = NULL;
 
+bool isSteaming = false;
 
 bool relayState;
 double temperature;
 
-
-//Define Variables we'll be connecting to
+// Define Variables we'll be connecting to
 double Setpoint, Input, Output;
 
-//Specify the links and initial tuning parameters
-double Kp=5, Ki=2, Kd=1;
+// Specify the links and initial tuning parameters
+double Kp = 60, Ki = 0, Kd = 3;
+// initialize the variables we're linked to
+
 PID myPID(&temperature, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 int WindowSize = 5000;
-unsigned long windowStartTime;
-
 
 #define dimmerPin 25 // dimmer psm pin GPIO25
-#define gndPin 22 // GPIO 22
+#define gndPin 22    // GPIO 22
 
-dimmerLamp dimmer(dimmerPin,gndPin);
+dimmerLamp dimmer(dimmerPin, gndPin);
 
-//Init the thermocouples with the appropriate pins defined above with the prefix "thermo"
+// Init the thermocouples with the appropriate pins defined above with the prefix "thermo"
 MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 
 bool ledOn;
-
-void readLed(Request &req, Response &res) {
+#include "ISR.h"
+void readLed(Request &req, Response &res)
+{
   res.print(ledOn);
 }
-
-void getCurrentTemp(Request &req, Response &res) {
-
+void updateStartup(Request &req, Response &res)
+{
+  ledOn = (req.read() != '0');
+  digitalWrite(LED_BUILTIN, ledOn);
+  return readLed(req, res);
 }
-void getTemp(Request &req, Response &res) {
-res.set("Content-Type", "application/json");
+void getCurrentTemp(Request &req, Response &res)
+{
+}
+void getTemp(Request &req, Response &res)
+{
+  res.set("Content-Type", "application/json");
 
-  StaticJsonDocument<100> testDocument;  
- testDocument["temp"].add(3);
- testDocument["temp"].add(2);
+  StaticJsonDocument<100> testDocument;
+  testDocument["temp"].add(3);
+  testDocument["temp"].add(2);
   char buffer[100];
- 
+
   serializeJson(testDocument, buffer);
- 
+
   Serial.println(buffer);
   res.print(buffer);
 }
+void updateSteaming(Request &req, Response &res)
+{
+  ledOn = (req.read() != '0');
+  return readLed(req, res);
+}
+void updateSetPoint(Request &req, Response &res)
+{
+  // aJsonStream stream(&req);
+  // char* tempFilter[2] = {"temp", NULL};
+  // aJsonObject* newUser = aJson.parse(&stream, tempFilter);
+  // aJsonObject* name = aJson.getObjectItem(newUser, "temp");
 
-void updateSetPoint(Request &req, Response &res) {
-    Serial.println(req.read());
-    
+  // Serial.println(name->valueint);
 }
 //##############################################################################################################################
 //###########################################___________SETUP____________________###############################################
 //##############################################################################################################################
-void setup() {
-  
+void setup()
+{
+
   // relay port init and set initial operating mode
-  
+  Setpoint = 95;
   pinMode(relayPin, OUTPUT);
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.print(".");
   }
   Serial.println(WiFi.localIP());
 
-  
+  app.get("/steaming", &readLed);
+
+  app.put("/steaming", &updateSteaming);
+  //   app.get("/setPoint", &getCurrentTemp);
+  //  // app.get("/setPoint", &getTemp);
+  //   app.put("/setPoint", &updateSetPoint);
 
   ArduinoOTA
-    .onStart([]() {
+      .onStart([]()
+               {
       String type;
       if (ArduinoOTA.getCommand() == U_FLASH)
         type = "sketch";
@@ -103,32 +130,23 @@ void setup() {
         type = "filesystem";
 
       // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type);
-    })
-    .onEnd([]() {
-      Serial.println("\nEnd");
-    })
-    .onProgress([](unsigned int progress, unsigned int total) {
-      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    })
-    .onError([](ota_error_t error) {
+      Serial.println("Start updating " + type); })
+      .onEnd([]()
+             { Serial.println("\nEnd"); })
+      .onProgress([](unsigned int progress, unsigned int total)
+                  { Serial.printf("Progress: %u%%\r", (progress / (total / 100))); })
+      .onError([](ota_error_t error)
+               {
       Serial.printf("Error[%u]: ", error);
       if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
       else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
       else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
       else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
+      else if (error == OTA_END_ERROR) Serial.println("End Failed"); });
 
   ArduinoOTA.begin();
-  
-  app.get("/led", &readLed);
-  app.get("/setPoint", &getCurrentTemp);
- // app.get("/setPoint", &getTemp);
-  app.put("/setPoint", &updateSetPoint);
 
-  
- // app.put("/led", &updateLed);
+  // app.put("/led", &updateLed);
   app.route(staticFiles());
 
   server.begin();
@@ -139,37 +157,38 @@ void setup() {
 
   thermoTimer = millis();
 
-  
-  //initialize the variables we're linked to
-  Setpoint = 95;
-
-  //tell the PID to range between 0 and the full window size
+  // tell the PID to range between 0 and the full window size
   myPID.SetOutputLimits(0, WindowSize);
 
-  //turn the PID on
+  // turn the PID on
   myPID.SetMode(AUTOMATIC);
 
-  dimmer.begin(NORMAL_MODE, ON); 
-  //dimmer initialisation: name.begin(MODE, STATE)
+  dimmer.begin(NORMAL_MODE, ON);
+  // dimmer initialisation: name.begin(MODE, STATE)
 
   dimmer.setPower(80);
+
+  initTimer1();
+  enableTimer1();
 }
 
 //##############################################################################################################################
 //###########################################___________WEBSOCKET________________###############################################
 //##############################################################################################################################
-void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
- 
-  if(type == WS_EVT_CONNECT){
- 
+void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
+{
+
+  if (type == WS_EVT_CONNECT)
+  {
+
     Serial.println("Websocket client connection received");
     globalClient = client;
- 
-  } else if(type == WS_EVT_DISCONNECT){
- 
+  }
+  else if (type == WS_EVT_DISCONNECT)
+  {
+
     Serial.println("Websocket client connection finished");
     globalClient = NULL;
- 
   }
 }
 
@@ -178,14 +197,18 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 //##############################################################################################################################
 
 // K-TYPE thermocouple read function
-void kThermoRead() { // Reading the thermocouple temperature
+void kThermoRead()
+{ // Reading the thermocouple temperature
   // Reading the temperature every 350ms between the loops
-  if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY){
-    temperature = thermocouple.readCelsius();  // Making sure we're getting a value
-    while (temperature <= 0 || temperature == NAN || temperature > 170.0) {
-      digitalWrite(relayPin, LOW);  // relayPin -> LOW
-      if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY){
-        temperature = thermocouple.readCelsius();  // Making sure we're getting a value
+  if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
+  {
+    temperature = thermocouple.readCelsius(); // Making sure we're getting a value
+    while (temperature <= 0 || temperature == NAN || temperature > 170.0)
+    {
+      digitalWrite(relayPin, LOW); // relayPin -> LOW
+      if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
+      {
+        temperature = thermocouple.readCelsius(); // Making sure we're getting a value
         thermoTimer = millis();
       }
     }
@@ -193,61 +216,41 @@ void kThermoRead() { // Reading the thermocouple temperature
   }
 }
 
-
 //##############################################################################################################################
 //###########################################___________HEAT_____________________###############################################
 //##############################################################################################################################
-void heat() {
-  /************************************************
-   * turn the output pin on/off based on pid output
-   ************************************************/
-  if (millis() - windowStartTime > WindowSize)
-  { //time to shift the Relay Window
-    windowStartTime += WindowSize;
+
+void wsSendData()
+{
+  if (globalClient != NULL && globalClient->status() == WS_CONNECTED)
+  {
+    StaticJsonDocument<100> testDocument;
+    testDocument["temp"] = temperature;
+    testDocument["brewTemp"] = temperature;
+    myTime = millis() / 1000;
+    testDocument["brewTime"] = myTime;
+
+    char buffer[100];
+    delay(500);
+    serializeJson(testDocument, buffer);
+
+    globalClient->text(buffer);
   }
-
-  if (Output < millis() - windowStartTime) {
-    digitalWrite(relayPin, LOW);
-    }
-  else {
-    digitalWrite(relayPin, HIGH);
-  }
-  
-}
-
-void wsSendData() {
-     if(globalClient != NULL && globalClient->status() == WS_CONNECTED){
-    StaticJsonDocument<100> testDocument;  
-     testDocument["temp"] = temperature;
-      testDocument["brewTemp"] = temperature;
-      myTime = millis() /1000;
-      testDocument["brewTime"] = myTime; 
-
-      char buffer[100];
-      delay(500);
-      serializeJson(testDocument, buffer);
-    
-      globalClient->text(buffer);
-
-   }
 }
 
 //##############################################################################################################################
 //###########################################___________LOOP_____________________###############################################
 //##############################################################################################################################
-void loop() {
-  
-  myPID.Compute();
-  heat();
-  
+void loop()
+{
 
-  //Serial.println(dimmer.getOutput());
-   ArduinoOTA.handle();
+  // Serial.println(dimmer.getOutput());
+  ArduinoOTA.handle();
   WiFiClient client = server.available();
   kThermoRead();
-  if (client.connected()) {
-    app.process(&client); 
+  if (client.connected())
+  {
+    app.process(&client);
   }
   wsSendData();
-
 }
