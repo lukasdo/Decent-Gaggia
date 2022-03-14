@@ -1,77 +1,35 @@
 
+# Intro
 
+This project started by the idea to improve the well known Gaggia Classic. Inspired by [Decent Espresso](https://decentespresso.com) and other Arduino coffe projects I tried to develop my own version of a "Decent" Gaggia Classic with an Arduino board. The inital prototype has a PID using an Arduino. Further development shall lead to pressure profiling and saving multiple shot profiles.
+
+# Feature preview
 
 https://user-images.githubusercontent.com/44913260/158221775-f9eea863-3e5c-412b-b36b-08d66c145335.MOV
 
-# Arduino Full Stack Tutorial
+# Features
+- [x] PID
+- [x] Over the air updates
+- [ ] Editing setpoints via interface
+- [ ] Switching between brew mode and steam mode
+- [ ] Pressure profiling
+- [ ] Weighing shots
+- [ ] Saving shot profiles
 
-https://awot.net/en/guide/tutorial.html
+# Bill of materials
+ First of all you should check which [Gaggia](https://clevercoffee.de/gaggia-classic-9403-pid-only/) machine you have. All principles can be applied to other manufacturers.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Base components
+- [ESP32](https://de.aliexpress.com/item/1005002410521023.html?spm=a2g0o.productlist.0.0.143d745aGmcwLI&algo_pvid=294d5305-bb05-42d3-a587-069c5c8609f6&aem_p4p_detail=202203141218331972711337181670031915877&algo_exp_id=294d5305-bb05-42d3-a587-069c5c8609f6-4&pdp_ext_f=%7B%22sku_id%22%3A%2212000020563171209%22%7D&pdp_pi=-1%3B3.72%3B-1%3B1.16%40salePrice%3BEUR%3Bsearch-mainSearch)
 
-## Available Scripts
+## PID components
+- [MAX6675 thermocouple](https://de.aliexpress.com/item/32860265425.html?spm=a2g0o.productlist.0.0.3c52733cTT2GjZ&algo_pvid=17b1e326-90ec-49c9-a830-8af828e13dd6&algo_exp_id=17b1e326-90ec-49c9-a830-8af828e13dd6-3&pdp_ext_f=%7B%22sku_id%22%3A%2265580676538%22%7D&pdp_pi=-1%3B2.46%3B-1%3B-1%40salePrice%3BEUR%3Bsearch-mainSearch) board for reading temperature values from a temp sensor
+- [K Typ temperature sensor for Gaggia 9403](https://de.aliexpress.com/item/32835036293.html?gatewayAdapt=glo2deu&spm=a2g0s.9042311.0.0.27424c4diT6T0k)
+- [K Typ temperature sensor C-M4 screw for Gaggia 9303](https://de.aliexpress.com/item/32835036293.html?gatewayAdapt=glo2deu&spm=a2g0s.9042311.0.0.27424c4diT6T0k)
+- [SSR 40DA Relay](https://de.aliexpress.com/item/4000899938277.html?spm=a2g0o.productlist.0.0.6abc4714c20hTA&algo_pvid=b4257e89-0111-4b18-91fa-7f3ecc7dff75&algo_exp_id=b4257e89-0111-4b18-91fa-7f3ecc7dff75-1&pdp_ext_f=%7B%22sku_id%22%3A%2212000025206149674%22%7D&pdp_pi=-1%3B3.9%3B-1%3B-1%40salePrice%3BEUR%3Bsearch-mainSearch) for switching the boiler on/off
 
-In the project directory, you can run:
+# Tech stack
 
-### `npm start`
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app) and [Awot](https://awot.net/en/guide/tutorial.html)
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
