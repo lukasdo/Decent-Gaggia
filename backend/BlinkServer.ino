@@ -141,9 +141,8 @@ void setup()
    asyncServer.on("/steaming", HTTP_POST, [] (AsyncWebServerRequest *request) {
    if(request->hasParam("download", true)) {
     AsyncWebParameter* p = request->getParam("download", true); 
-  
-    Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-    isSteaming = p->value() ? true : false;
+    isSteaming = (p->value()  != "0");
+
      request->send(200, "text/plain", "OK");
   
   }
