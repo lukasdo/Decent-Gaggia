@@ -207,7 +207,7 @@ class Chart extends React.Component<IProps, IState> {
     }
 
     handleStateChange(event: React.ChangeEvent<HTMLInputElement>) {
-        fetch(`http://${ARDUINO_IP}/steaming`, { method: 'PUT', body: event.target.checked ? '0' : '1' })
+        fetch(`http://${ARDUINO_IP}:8080/steaming`, { method: 'PUT', body: event.target.checked ? '0' : '1' })
             .then(response => response.text())
             .then(state => this.setLedState(state));
     }
