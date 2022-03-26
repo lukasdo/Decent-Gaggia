@@ -1,8 +1,7 @@
 
 # Intro
 
-This project started by the idea to improve the well known Gaggia Classic. Inspired by [Decent Espresso](https://decentespresso.com) and other Arduino coffe projects I tried to develop my own version of a "Decent" Gaggia Classic with an Arduino board. The inital prototype has a PID using an Arduino. Further development shall lead to pressure profiling and saving multiple shot profiles.
-
+This project started with the idea to improve the well known Gaggia Classic. Inspired by [Decent Espresso](https://decentespresso.com) and other Arduino coffee projects I tried to develop my version of a "Decent" Gaggia Classic with an Arduino board. The initial prototype has a PID using an Arduino. Further development shall lead to pressure profiling and saving multiple shot profiles.
 # Feature preview
 
 https://user-images.githubusercontent.com/44913260/158221775-f9eea863-3e5c-412b-b36b-08d66c145335.MOV
