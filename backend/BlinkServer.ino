@@ -16,19 +16,22 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
+#include <ESPAsyncWebServer.h>
 unsigned long thermoTimer;
 unsigned long myTime;
 WiFiServer server(8080);
 Application app;
 AsyncWebServer webSocketServer(80);
 AsyncWebSocket ws("/ws");
+
+// Create AsyncWebServer object on port 80
+AsyncWebServer asyncServer(80);
 hw_timer_t *timer = NULL;
 
 const unsigned int windowSize = 1000;
 unsigned int isrCounter = 0; // counter for ISR
 AsyncWebSocketClient *globalClient = NULL;
 
-bool isSteaming = false;
 
 bool relayState;
 double temperature;
@@ -52,21 +55,10 @@ dimmerLamp dimmer(dimmerPin, gndPin);
 // Init the thermocouples with the appropriate pins defined above with the prefix "thermo"
 MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 
-bool ledOn;
+bool isSteaming = false;
+
 #include "ISR.h"
-void readLed(Request &req, Response &res)
-{
-  res.print(ledOn);
-}
-void updateStartup(Request &req, Response &res)
-{
-  ledOn = (req.read() != '0');
-  digitalWrite(LED_BUILTIN, ledOn);
-  return readLed(req, res);
-}
-void getCurrentTemp(Request &req, Response &res)
-{
-}
+
 void getTemp(Request &req, Response &res)
 {
   res.set("Content-Type", "application/json");
@@ -83,8 +75,7 @@ void getTemp(Request &req, Response &res)
 }
 void updateSteaming(Request &req, Response &res)
 {
-  ledOn = (req.read() != '0');
-  return readLed(req, res);
+  isSteaming = (req.read() != '0');
 }
 void updateSetPoint(Request &req, Response &res)
 {
@@ -112,13 +103,6 @@ void setup()
     Serial.print(".");
   }
   Serial.println(WiFi.localIP());
-
-  app.get("/steaming", &readLed);
-
-  app.put("/steaming", &updateSteaming);
-  //   app.get("/setPoint", &getCurrentTemp);
-  //  // app.get("/setPoint", &getTemp);
-  //   app.put("/setPoint", &updateSetPoint);
 
   ArduinoOTA
       .onStart([]()
@@ -149,7 +133,23 @@ void setup()
   // app.put("/led", &updateLed);
   app.route(staticFiles());
 
+   // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
+  asyncServer.on("/steaming", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", isSteaming ? "true" : "false");
+  });
+
+   asyncServer.on("/steaming", HTTP_POST, [] (AsyncWebServerRequest *request) {
+   if(request->hasParam("download", true)) {
+    AsyncWebParameter* p = request->getParam("download", true); 
+  
+    Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+    isSteaming = p->value() ? true : false;
+     request->send(200, "text/plain", "OK");
+  
+  }
+  });
   server.begin();
+  asyncServer.begin();
   webSocketServer.begin();
 
   ws.onEvent(onWsEvent);
@@ -247,10 +247,10 @@ void loop()
   // Serial.println(dimmer.getOutput());
   ArduinoOTA.handle();
   WiFiClient client = server.available();
-  kThermoRead();
+ // kThermoRead();
   if (client.connected())
   {
     app.process(&client);
   }
-  wsSendData();
+ // wsSendData();
 }
