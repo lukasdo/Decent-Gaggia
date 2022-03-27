@@ -1,0 +1,1 @@
+export const ARDUINO_IP : String = '192.168.2.116';

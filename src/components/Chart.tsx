@@ -2,9 +2,10 @@ import { Slider, Switch } from "@mui/material";
 import Box from "@mui/material/Box";
 import React from 'react';
 import { ChartComponentProps, Line } from "react-chartjs-2";
+import ARDUINO_IP from './../config';
 import './../App.css';
 
-const ARDUINO_IP = '192.168.2.116';
+
 
 interface IMessage {
     temp: number;
@@ -103,7 +104,7 @@ class Chart extends React.Component<IProps, IState> {
 
     componentDidMount() {
 
-        fetch(`http://${ARDUINO_IP}:80/steaming`)
+        fetch(`http://${ARDUINO_IP.ARDUINO_IP}:80/steaming`)
             .then(response => response.text())
             .then((state) => {
                 console.log(JSON.parse(state));
@@ -138,11 +139,11 @@ class Chart extends React.Component<IProps, IState> {
     handleChange = (event: React.SyntheticEvent | Event, value: number | number[]) => {
         console.log(value);
         // setValue(newValue as number);
-        fetch(`http://${ARDUINO_IP}:8080/steaming`, { method: 'PUT', body: JSON.stringify({ "temp": value.toString() }) })
+        fetch(`http://${ARDUINO_IP.ARDUINO_IP}:8080/steaming`, { method: 'PUT', body: JSON.stringify({ "temp": value.toString() }) })
             .then(response => response.text());
     };
     //
-    ws = new WebSocket(`ws://${ARDUINO_IP}:90/ws`);
+    ws = new WebSocket(`ws://${ARDUINO_IP.ARDUINO_IP}:90/ws`);
     startConnection = () => {
 
         if (this.state.wsConnected) {
@@ -150,7 +151,7 @@ class Chart extends React.Component<IProps, IState> {
             this.setState({ wsConnected: false });
         }
 
-        this.ws = new WebSocket(`ws://${ARDUINO_IP}:90/ws`);
+        this.ws = new WebSocket(`ws://${ARDUINO_IP.ARDUINO_IP}:90/ws`);
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
             console.log('connected')
@@ -216,7 +217,7 @@ class Chart extends React.Component<IProps, IState> {
     changeSteamingState(event: React.ChangeEvent<HTMLInputElement>) {
         let formData = new FormData();
         formData.append('steaming', event.target.checked ? '1' : '0');
-        fetch(`http://${ARDUINO_IP}:80/steaming`,
+        fetch(`http://${ARDUINO_IP.ARDUINO_IP}:80/steaming`,
             {
                 method: 'POST',
                 body: formData
