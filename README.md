@@ -10,8 +10,8 @@ https://user-images.githubusercontent.com/44913260/158221775-f9eea863-3e5c-412b-
 - [x] HMI using a modern frontend framework ( React )
 - [x] PID using an arduino
 - [x] Over the air updates
+- [x] Switching between brew mode and steam mode
 - [ ] Editing setpoints via interface
-- [ ] Switching between brew mode and steam mode
 - [ ] Pressure profiling
 - [ ] Weighing shots
 - [ ] Saving shot profiles
