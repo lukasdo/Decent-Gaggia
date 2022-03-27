@@ -49,6 +49,7 @@ class Chart extends React.Component<IProps, IState> {
     constructor(props: IProps) {
         super(props);
 
+        this.changeSteamingState = this.changeSteamingState.bind(this);
 
         let sessionData = sessionStorage.getItem('data');
 
@@ -100,6 +101,19 @@ class Chart extends React.Component<IProps, IState> {
 
     }
 
+    componentDidMount() {
+
+        fetch(`http://${ARDUINO_IP}:80/steaming`)
+            .then(response => response.text())
+            .then((state) => {
+                console.log(JSON.parse(state));
+                this.setSteamingState(JSON.parse(state))
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Could not fetch steaming state, setting default to espresso");
+            });
+    }
 
     componentWillUnmount() {
         let seen: any[] = [];
@@ -117,15 +131,8 @@ class Chart extends React.Component<IProps, IState> {
     }
 
 
-    setLedState(state: any) {
-        this.setState({ steaming: state !== '0' })
-    }
-    componentDidMount() {
-
-        // fetch('http://192.168.2.116:8080/steaming')
-        //     .then(response => response.text())
-
-        //     .then(state => this.setLedState(state));
+    setSteamingState(state: boolean) {
+        this.setState({ steaming: state })
     }
 
     handleChange = (event: React.SyntheticEvent | Event, value: number | number[]) => {
@@ -206,10 +213,19 @@ class Chart extends React.Component<IProps, IState> {
 
     }
 
-    handleStateChange(event: React.ChangeEvent<HTMLInputElement>) {
-        fetch(`http://${ARDUINO_IP}:8080/steaming`, { method: 'PUT', body: event.target.checked ? '0' : '1' })
+    changeSteamingState(event: React.ChangeEvent<HTMLInputElement>) {
+        let formData = new FormData();
+        formData.append('steaming', event.target.checked ? '1' : '0');
+        fetch(`http://${ARDUINO_IP}:80/steaming`,
+            {
+                method: 'POST',
+                body: formData
+            })
             .then(response => response.text())
-            .then(state => this.setLedState(state));
+            .then(state => this.setSteamingState(JSON.parse(state)))
+            .catch(error => {
+                console.error(error);
+            });
     }
 
 
@@ -236,7 +252,7 @@ class Chart extends React.Component<IProps, IState> {
                             <p>Steaming</p>
                             <Switch
                                 checked={this.state.steaming}
-                                onChange={this.handleStateChange}
+                                onChange={this.changeSteamingState}
                                 inputProps={{ 'aria-label': 'controlled' }}
                             />
                         </div>
