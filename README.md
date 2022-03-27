@@ -5,13 +5,6 @@ This project started with the idea to improve the well known Gaggia Classic. Ins
 # Live demo
 
 
-## First part switching modes
-
-https://user-images.githubusercontent.com/44913260/160292981-86c6b6a7-b88b-4d67-b91e-03752f098999.mov
-
-## Second part
-https://user-images.githubusercontent.com/44913260/160292985-6a3bd1aa-15a1-4568-9e29-59ccb912ce3b.mov
-
 
 ## Pulling a shot
 https://user-images.githubusercontent.com/44913260/160293038-132dfd3f-46b5-47e0-9442-545ab9c723f5.mov
