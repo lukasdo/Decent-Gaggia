@@ -43,7 +43,7 @@
   "awot-static": {
     "sources": "./build",
     "indexFile": "index.html",
-    "sketchDir": "./BlinkServer",
+    "sketchDir": "./backend",
     "exclude": [
       "*.map",
       "service-worker.js"
