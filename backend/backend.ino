@@ -2,7 +2,6 @@
 
 #include <RBDdimmer.h>
 
-
 #include <AsyncWebSocket.h>
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
@@ -32,7 +31,6 @@ hw_timer_t *timer = NULL;
 const unsigned int windowSize = 1000;
 unsigned int isrCounter = 0; // counter for ISR
 AsyncWebSocketClient *globalClient = NULL;
-
 
 bool relayState;
 double temperature;
@@ -87,6 +85,7 @@ void updateSetPoint(Request &req, Response &res)
 
   // Serial.println(name->valueint);
 }
+
 //##############################################################################################################################
 //###########################################___________SETUP____________________###############################################
 //##############################################################################################################################
@@ -134,20 +133,33 @@ void setup()
   // app.put("/led", &updateLed);
   app.route(staticFiles());
 
-   // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
-  asyncServer.on("/steaming", HTTP_GET, [] (AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", isSteaming ? "true" : "false");
-  });
+  // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
+  asyncServer.on("/steaming", HTTP_GET, [](AsyncWebServerRequest *request)
+                 { request->send(200, "text/plain", isSteaming ? "true" : "false"); });
 
-   asyncServer.on("/steaming", HTTP_POST, [] (AsyncWebServerRequest *request) {
-   if(request->hasParam("download", true)) {
-    AsyncWebParameter* p = request->getParam("download", true); 
+  asyncServer.on("/steaming", HTTP_POST, [](AsyncWebServerRequest *request)
+                 {
+   if(request->hasParam("steaming", true)) {
+    AsyncWebParameter* p = request->getParam("steaming", true); 
     isSteaming = (p->value()  != "0");
 
-     request->send(200, "text/plain", "OK");
-  
-  }
-  });
+ request->send(200, "text/plain", isSteaming ? "true" : "false");
+  } });
+  asyncServer.onNotFound([](AsyncWebServerRequest *request)
+                         {
+  if (request->method() == HTTP_OPTIONS) {
+      AsyncWebServerResponse * r = request->beginResponse(200);
+
+        r->addHeader("Access-Control-Max-Age", "10000");
+        r->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
+        r->addHeader("Access-Control-Allow-Headers", "*");
+    request->send(r);
+  } else {
+    request->send(404);
+  } });
+
+  // Enable cors
+  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   server.begin();
   asyncServer.begin();
   webSocketServer.begin();
@@ -247,10 +259,10 @@ void loop()
   // Serial.println(dimmer.getOutput());
   ArduinoOTA.handle();
   WiFiClient client = server.available();
- // kThermoRead();
+  // kThermoRead();
   if (client.connected())
   {
     app.process(&client);
   }
- // wsSendData();
+  // wsSendData();
 }
