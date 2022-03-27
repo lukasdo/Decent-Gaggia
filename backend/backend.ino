@@ -93,7 +93,7 @@ void setup()
 {
 
   // relay port init and set initial operating mode
-  Setpoint = 95;
+  Setpoint = espressoSetPoint;
   pinMode(relayPin, OUTPUT);
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -255,14 +255,21 @@ void wsSendData()
 //##############################################################################################################################
 void loop()
 {
-
+  if (isSteaming)
+  {
+    Setpoint = steamingSetPoint;
+  }
+  else
+  {
+    Setpoint = espressoSetPoint;
+  }
   // Serial.println(dimmer.getOutput());
   ArduinoOTA.handle();
   WiFiClient client = server.available();
-  // kThermoRead();
+  kThermoRead();
   if (client.connected())
   {
     app.process(&client);
   }
-  // wsSendData();
+  wsSendData();
 }
