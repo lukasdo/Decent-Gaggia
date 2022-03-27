@@ -240,7 +240,7 @@ class Chart extends React.Component<IProps, IState> {
                     </div>
                     <div className="col-1">
                         <div>
-                            <p>Temperrature</p>
+                            <p>Temperature</p>
                             <div id="gauge3" className="gauge-container three">
                                 <span>{this.state.temp}</span>
                             </div>

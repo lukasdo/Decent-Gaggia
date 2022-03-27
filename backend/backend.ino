@@ -51,34 +51,6 @@ bool isSteaming = false;
 
 #include "ISR.h"
 
-void getTemp(Request &req, Response &res)
-{
-  res.set("Content-Type", "application/json");
-
-  StaticJsonDocument<100> testDocument;
-  testDocument["temp"].add(3);
-  testDocument["temp"].add(2);
-  char buffer[100];
-
-  serializeJson(testDocument, buffer);
-
-  Serial.println(buffer);
-  res.print(buffer);
-}
-void updateSteaming(Request &req, Response &res)
-{
-  isSteaming = (req.read() != '0');
-}
-void updateSetPoint(Request &req, Response &res)
-{
-  // aJsonStream stream(&req);
-  // char* tempFilter[2] = {"temp", NULL};
-  // aJsonObject* newUser = aJson.parse(&stream, tempFilter);
-  // aJsonObject* name = aJson.getObjectItem(newUser, "temp");
-
-  // Serial.println(name->valueint);
-}
-
 //##############################################################################################################################
 //###########################################___________SETUP____________________###############################################
 //##############################################################################################################################
@@ -123,29 +95,27 @@ void setup()
 
   ArduinoOTA.begin();
 
-  // app.put("/led", &updateLed);
   app.route(staticFiles());
 
   // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
-  asyncServer.on("/steaming", HTTP_GET, [](AsyncWebServerRequest *request)
-                 { request->send(200, "text/plain", isSteaming ? "true" : "false"); });
+  asyncServer.on("/steaming", HTTP_GET, [](AsyncWebServerRequest *request) { 
+    request->send(200, "text/plain", isSteaming ? "true" : "false"); 
+  });
 
-  asyncServer.on("/steaming", HTTP_POST, [](AsyncWebServerRequest *request)
-                 {
+  asyncServer.on("/steaming", HTTP_POST, [](AsyncWebServerRequest *request) { 
    if(request->hasParam("steaming", true)) {
     AsyncWebParameter* p = request->getParam("steaming", true); 
     isSteaming = (p->value()  != "0");
+    request->send(200, "text/plain", isSteaming ? "true" : "false");
+    }
+  });
 
- request->send(200, "text/plain", isSteaming ? "true" : "false");
-  } });
-  asyncServer.onNotFound([](AsyncWebServerRequest *request)
-                         {
+  asyncServer.onNotFound([](AsyncWebServerRequest *request) {
   if (request->method() == HTTP_OPTIONS) {
-      AsyncWebServerResponse * r = request->beginResponse(200);
-
-        r->addHeader("Access-Control-Max-Age", "10000");
-        r->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
-        r->addHeader("Access-Control-Allow-Headers", "*");
+      AsyncWebServerResponse * response = request->beginResponse(200);
+        response->addHeader("Access-Control-Max-Age", "10000");
+        response->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
+        response->addHeader("Access-Control-Allow-Headers", "*");
     request->send(r);
   } else {
     request->send(404);
