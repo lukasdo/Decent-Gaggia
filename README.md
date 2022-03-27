@@ -4,9 +4,18 @@
 This project started with the idea to improve the well known Gaggia Classic. Inspired by [Decent Espresso](https://decentespresso.com) and other Arduino coffee projects I tried to develop my version of a "Decent" Gaggia Classic with an Arduino board. The initial prototype has a PID using an Arduino. Further development shall lead to pressure profiling and saving multiple shot profiles.
 # Live demo
 
-https://user-images.githubusercontent.com/44913260/158221775-f9eea863-3e5c-412b-b36b-08d66c145335.MOV
 
-https://user-images.githubusercontent.com/44913260/160289984-78ca732f-0f50-404d-9191-76a4b6a1b515.mov
+## First part switching modes
+
+https://user-images.githubusercontent.com/44913260/160292981-86c6b6a7-b88b-4d67-b91e-03752f098999.mov
+
+## Second part
+https://user-images.githubusercontent.com/44913260/160292985-6a3bd1aa-15a1-4568-9e29-59ccb912ce3b.mov
+
+
+## Pulling a shot
+https://user-images.githubusercontent.com/44913260/160293038-132dfd3f-46b5-47e0-9442-545ab9c723f5.mov
+
 # Features
 - [x] HMI using a modern frontend framework ( React )
 - [x] PID using an arduino
