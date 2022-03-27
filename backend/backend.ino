@@ -1,9 +1,5 @@
-#include "StaticFiles.h"
-#include "config.h"
-#include "aWOT.h"
-
 #include <PID_v1.h>
-#include <RBDdimmer.h>
+
 #include <AsyncWebSocket.h>
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
@@ -15,6 +11,11 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <ESPAsyncWebServer.h>
+
+#include "aWOT.h"
+#include "config.h"
+#include "StaticFiles.h"
+
 
 unsigned long thermoTimer;
 unsigned long myTime;
@@ -116,7 +117,7 @@ void setup()
         response->addHeader("Access-Control-Max-Age", "10000");
         response->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
         response->addHeader("Access-Control-Allow-Headers", "*");
-    request->send(r);
+    request->send(response);
   } else {
     request->send(404);
   } });
@@ -137,11 +138,6 @@ void setup()
 
   // turn the PID on
   myPID.SetMode(AUTOMATIC);
-
-  dimmer.begin(NORMAL_MODE, ON);
-  // dimmer initialisation: name.begin(MODE, STATE)
-
-  dimmer.setPower(80);
 
   initTimer1();
   enableTimer1();
@@ -226,7 +222,7 @@ void loop()
   {
     Setpoint = espressoSetPoint;
   }
-  // Serial.println(dimmer.getOutput());
+ 
   ArduinoOTA.handle();
   WiFiClient client = server.available();
   kThermoRead();
