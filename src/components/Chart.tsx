@@ -142,7 +142,7 @@ class Chart extends React.Component<IProps, IState> {
             .then(response => response.text());
     };
     //
-    ws = new WebSocket(`ws://${ARDUINO_IP}:80/ws`);
+    ws = new WebSocket(`ws://${ARDUINO_IP}:90/ws`);
     startConnection = () => {
 
         if (this.state.wsConnected) {
@@ -150,7 +150,7 @@ class Chart extends React.Component<IProps, IState> {
             this.setState({ wsConnected: false });
         }
 
-        this.ws = new WebSocket(`ws://${ARDUINO_IP}:80/ws`);
+        this.ws = new WebSocket(`ws://${ARDUINO_IP}:90/ws`);
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
             console.log('connected')

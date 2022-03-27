@@ -1,27 +1,27 @@
+#include "StaticFiles.h"
+#include "config.h"
+#include "aWOT.h"
+
 #include <PID_v1.h>
-
 #include <RBDdimmer.h>
-
 #include <AsyncWebSocket.h>
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
-#include "aWOT.h"
-#include "StaticFiles.h"
-#include "config.h"
 #include <aJSON.h>
 #include <max6675.h>
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-
 #include <ESPAsyncWebServer.h>
+
 unsigned long thermoTimer;
 unsigned long myTime;
+
 WiFiServer server(8080);
 Application app;
-AsyncWebServer webSocketServer(80);
+AsyncWebServer webSocketServer(90);
 AsyncWebSocket ws("/ws");
 
 // Create AsyncWebServer object on port 80
@@ -35,21 +35,14 @@ AsyncWebSocketClient *globalClient = NULL;
 bool relayState;
 double temperature;
 
-// Define Variables we'll be connecting to
 double Setpoint, Input, Output;
 
-// Specify the links and initial tuning parameters
+// PID Values
 double Kp = 60, Ki = 0, Kd = 3;
-// initialize the variables we're linked to
 
 PID myPID(&temperature, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 
 int WindowSize = 5000;
-
-#define dimmerPin 25 // dimmer psm pin GPIO25
-#define gndPin 22    // GPIO 22
-
-dimmerLamp dimmer(dimmerPin, gndPin);
 
 // Init the thermocouples with the appropriate pins defined above with the prefix "thermo"
 MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
