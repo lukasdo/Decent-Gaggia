@@ -6,6 +6,7 @@ This project started with the idea to improve the well known Gaggia Classic. Ins
 
 https://user-images.githubusercontent.com/44913260/158221775-f9eea863-3e5c-412b-b36b-08d66c145335.MOV
 
+https://user-images.githubusercontent.com/44913260/160289984-78ca732f-0f50-404d-9191-76a4b6a1b515.mov
 # Features
 - [x] HMI using a modern frontend framework ( React )
 - [x] PID using an arduino
