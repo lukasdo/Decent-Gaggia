@@ -20,6 +20,17 @@ https://user-images.githubusercontent.com/44913260/160293038-132dfd3f-46b5-47e0-
 - [ ] Weighing shots
 - [ ] Saving shot profiles
 
+# Bill of Materials
+
+See [Wiki Page](https://github.com/lukasdo/Decent-Gaggia/wiki/Bill-of-Materials).
+
+# Assembly 
+
+See [Wiki Page](https://github.com/lukasdo/Decent-Gaggia/wiki/Assembly).
+
+# Running the project
+
+See [Wiki Page](https://github.com/lukasdo/Decent-Gaggia/wiki/Running-the-project).
 
 
 # Tech stack
