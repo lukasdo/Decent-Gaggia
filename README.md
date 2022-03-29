@@ -17,6 +17,7 @@ https://user-images.githubusercontent.com/44913260/160293038-132dfd3f-46b5-47e0-
 - [x] PID using an arduino
 - [x] Over the air updates
 - [x] Switching between brew mode and steam mode
+- [ ] Brew and steam detection
 - [ ] Powering the Arduino from the Gaggia
 - [ ] Editing setpoints via interface
 - [ ] Pressure profiling
