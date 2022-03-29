@@ -4,7 +4,6 @@ import { ChartComponentProps, Line } from "react-chartjs-2";
 import './../App.css';
 import ARDUINO_IP from './../config';
 
-
 interface IMessage {
     temp: number;
     brewTemp: number;
@@ -27,6 +26,30 @@ interface IState {
 
 }
 
+const chartOptions = {
+    maintainAspectRatio: false,
+    responsive: true,
+    scales: {
+        xAxes: [{
+            type: 'time',
+            time: {
+                parser: 'HH:mm:ss',
+                unit: 'minute',
+                displayFormats: {
+                    'minute': 'HH:mm:ss',
+                    'hour': 'HH:mm:ss'
+                }
+            },
+            ticks: {
+                source: 'data',
+                autoSkip: true,
+                maxTicksLimit: 20,
+            },
+        }]
+    }
+}
+
+
 
 class Chart extends React.Component<IProps, IState> {
     ws = new WebSocket(`ws://${ARDUINO_IP.ARDUINO_IP}:90/ws`);
@@ -36,7 +59,7 @@ class Chart extends React.Component<IProps, IState> {
         super(props);
         this.changeSteamingState = this.changeSteamingState.bind(this);
         this.myRef = React.createRef();
-    
+
         let sessionData = sessionStorage.getItem('data');
         if (sessionData) {
             let sessionState = JSON.parse(sessionData);
@@ -55,25 +78,21 @@ class Chart extends React.Component<IProps, IState> {
                 wsConnected: false,
                 data: {
                     data: {
-                        labels: [],
                         datasets: [
                             {
                                 label: "Temperature",
                                 data: [],
-                                fill: true,
-                                backgroundColor: "rgba(75,192,192,0.2)",
-                                borderColor: "rgba(75,192,192,1)"
                             },
                         ]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        responsive: true,
                     }
                 }
             }
-        }
 
+        }
+    }
+
+    getTimeString() {
+        return Date.now();
     }
 
     componentDidMount() {
@@ -110,7 +129,8 @@ class Chart extends React.Component<IProps, IState> {
         this.setState({ steaming: state })
     }
 
-    handleChange = (event: React.SyntheticEvent | Event, value: number | number[]) => {        console.log(value);
+    handleChange = (event: React.SyntheticEvent | Event, value: number | number[]) => {
+        console.log(value);
         fetch(`http://${ARDUINO_IP.ARDUINO_IP}:8080/steaming`, { method: 'PUT', body: JSON.stringify({ "temp": value.toString() }) })
             .then(response => response.text());
     };
@@ -136,7 +156,7 @@ class Chart extends React.Component<IProps, IState> {
             const message: IMessage = JSON.parse(evt.data);
             this.setState({
                 temp: message.temp,
-                brewTime: [...this.state.brewTime, message.brewTime],
+                brewTime: [...this.state.brewTime, this.getTimeString()],
                 brewTemp: [...this.state.brewTemp, message.brewTemp],
                 data: {
                     data: {
@@ -150,10 +170,6 @@ class Chart extends React.Component<IProps, IState> {
                                 borderColor: "rgba(75,192,192,1)"
                             },
                         ]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        responsive: true,
                     }
                 }
             });
@@ -192,7 +208,7 @@ class Chart extends React.Component<IProps, IState> {
                 <div className="row">
                     <div className="col-3">
 
-                        <Line ref={this.myRef} options={this.state.data.options} data={this.state.data.data} />
+                        <Line ref={this.myRef} options={chartOptions} data={this.state.data.data} />
                     </div>
                     <div className="col-1">
                         <div>
