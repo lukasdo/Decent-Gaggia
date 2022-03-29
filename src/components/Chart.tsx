@@ -30,6 +30,12 @@ const chartOptions = {
     maintainAspectRatio: false,
     responsive: true,
     scales: {
+        yAxes: [{
+            display: true,
+            ticks: {
+                suggestedMin: 80,    // minimum will be 0, unless there is a lower value.
+            }
+        }],
         xAxes: [{
             type: 'time',
             time: {
