@@ -5,12 +5,9 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
-#include <aJSON.h>
 #include <max6675.h>
-#include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include <ESPAsyncWebServer.h>
 
 #include "aWOT.h"
 #include "config.h"
