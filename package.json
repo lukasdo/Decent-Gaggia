@@ -1,12 +1,8 @@
 {
-  "name": "led-blink",
+  "name": "Decent-Gaggia",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@emotion/react": "^11.7.1",
-    "@emotion/styled": "^11.6.0",
-    "@hookstate/core": "^3.0.13",
-    "@hookstate/persistence": "^3.0.0",
     "@material/react-tab-bar": "^0.15.0",
     "@mui/material": "^5.4.1",
     "chart.js": "2.9.3",
@@ -15,9 +11,6 @@
     "react-chartjs-2": "2.9.0",
     "react-dom": "^16.8.4",
     "react-scripts": "2.1.8",
-    "react-toggle-button": "^2.2.0",
-    "socket.io-client": "^4.4.1",
-    "svg-gauge": "^1.0.6",
     "typescript": "^4.5.5"
   },
   "scripts": {

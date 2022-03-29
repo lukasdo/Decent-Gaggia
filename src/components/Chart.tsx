@@ -82,19 +82,8 @@ class Chart extends React.Component<IProps, IState> {
                         ]
                     },
                     options: {
-
                         maintainAspectRatio: false,
                         responsive: true,
-                        scales: {
-                            yAxes: [{
-                                display: true,
-                                ticks: {
-                                    beginAtZero: true   // minimum value will be 0.
-                                },
-                                min: 20,
-                                max: 120
-                            }]
-                        }
                     }
                 }
             }
@@ -181,21 +170,6 @@ class Chart extends React.Component<IProps, IState> {
                     options: {
                         maintainAspectRatio: false,
                         responsive: true,
-                        scales: {
-                            yAxes: [{
-                                display: true,
-                                min: 20,
-                                max: 120
-                            }],
-                            xAxes: {
-                                type: 'time',
-                                time: {
-                                    displayFormats: {
-                                        quarter: 'HH MM'
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             });

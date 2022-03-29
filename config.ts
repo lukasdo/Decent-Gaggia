@@ -1,1 +1,1 @@
-export const ARDUINO_IP : String = '192.168.2.116';
+export const ARDUINO_IP : String = 'ARDUINO.IP';
