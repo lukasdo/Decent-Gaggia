@@ -1,10 +1,8 @@
-import { Slider, Switch } from "@mui/material";
-import Box from "@mui/material/Box";
+import { Switch } from "@mui/material";
 import React from 'react';
 import { ChartComponentProps, Line } from "react-chartjs-2";
-import ARDUINO_IP from './../config';
 import './../App.css';
-
+import ARDUINO_IP from './../config';
 
 
 interface IMessage {
@@ -26,48 +24,35 @@ interface IState {
     steaming: boolean;
     startUp: boolean;
     wsConnected: boolean;
+
 }
 
-
-function valuetext(value: number) {
-    return `${value}°C`;
-}
-
-const marks = [
-    {
-        value: 80,
-        label: '80°C',
-    },
-    {
-        value: 100,
-        label: '100°C',
-    },
-];
-
-let data = {};
 
 class Chart extends React.Component<IProps, IState> {
+    ws = new WebSocket(`ws://${ARDUINO_IP.ARDUINO_IP}:90/ws`);
+
+    private myRef: React.RefObject<Line>;
     constructor(props: IProps) {
         super(props);
-
         this.changeSteamingState = this.changeSteamingState.bind(this);
-
+        this.myRef = React.createRef();
+    
         let sessionData = sessionStorage.getItem('data');
-
         if (sessionData) {
             let sessionState = JSON.parse(sessionData);
             this.state = sessionState;
+            this.myRef.current?.chartInstance.update();
+
         } else {
             this.state = {
-                wsConnected: false,
                 update: false,
                 temp: 20,
                 brewTemp: [],
                 brewTime: [],
                 setPoint: 95,
                 startUp: false,
-
                 steaming: false,
+                wsConnected: false,
                 data: {
                     data: {
                         labels: [],
@@ -92,11 +77,11 @@ class Chart extends React.Component<IProps, IState> {
     }
 
     componentDidMount() {
+        this.setState({ wsConnected: false });
 
         fetch(`http://${ARDUINO_IP.ARDUINO_IP}:80/steaming`)
             .then(response => response.text())
             .then((state) => {
-                console.log(JSON.parse(state));
                 this.setSteamingState(JSON.parse(state))
             })
             .catch(error => {
@@ -117,7 +102,7 @@ class Chart extends React.Component<IProps, IState> {
             }
             return val;
         });
-        localStorage.setItem('data', stringified);
+        sessionStorage.setItem('data', stringified);
     }
 
 
@@ -125,22 +110,21 @@ class Chart extends React.Component<IProps, IState> {
         this.setState({ steaming: state })
     }
 
-    handleChange = (event: React.SyntheticEvent | Event, value: number | number[]) => {
-        console.log(value);
-        // setValue(newValue as number);
+    handleChange = (event: React.SyntheticEvent | Event, value: number | number[]) => {        console.log(value);
         fetch(`http://${ARDUINO_IP.ARDUINO_IP}:8080/steaming`, { method: 'PUT', body: JSON.stringify({ "temp": value.toString() }) })
             .then(response => response.text());
     };
     //
-    ws = new WebSocket(`ws://${ARDUINO_IP.ARDUINO_IP}:90/ws`);
-    startConnection = () => {
 
+    startConnection = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (this.state.wsConnected) {
             this.ws.close();
             this.setState({ wsConnected: false });
         }
 
-        this.ws = new WebSocket(`ws://${ARDUINO_IP.ARDUINO_IP}:90/ws`);
+        if (event.target.checked) {
+            this.ws = new WebSocket(`ws://${ARDUINO_IP.ARDUINO_IP}:90/ws`);
+        }
         this.ws.onopen = () => {
             // on connecting, do nothing but log it to the console
             console.log('connected')
@@ -183,9 +167,7 @@ class Chart extends React.Component<IProps, IState> {
 
 
     stopConnec = () => {
-
         this.ws.close();
-
     }
 
     changeSteamingState(event: React.ChangeEvent<HTMLInputElement>) {
@@ -210,7 +192,7 @@ class Chart extends React.Component<IProps, IState> {
                 <div className="row">
                     <div className="col-3">
 
-                        <Line options={this.state.data.options} data={this.state.data.data} />
+                        <Line ref={this.myRef} options={this.state.data.options} data={this.state.data.data} />
                     </div>
                     <div className="col-1">
                         <div>
@@ -236,19 +218,6 @@ class Chart extends React.Component<IProps, IState> {
                 </div>
                 <div>
                 </div>
-                {/* <Box sx={{ width: 300 }}>
-                    <Slider
-                        aria-label="Custom marks"
-                        defaultValue={90}
-                        getAriaValueText={valuetext}
-                        step={1}
-                        min={80}
-                        max={100}
-                        valueLabelDisplay="auto"
-                        marks={marks}
-                        onChangeCommitted={this.handleChange}
-                    />
-                </Box> */}
             </div>
 
         );
