@@ -2,7 +2,8 @@ import { Switch } from "@mui/material";
 import React from 'react';
 import { ChartComponentProps, Line } from "react-chartjs-2";
 import './../App.css';
-import ARDUINO_IP from './../config';
+import ARDUINO_IP from '../config';
+import Timer from "./Timer";
 
 interface IMessage {
     temp: number;
@@ -34,6 +35,8 @@ const chartOptions = {
             display: true,
             ticks: {
                 suggestedMin: 80,    // minimum will be 0, unless there is a lower value.
+
+                maxTicksLimit: 5,
             }
         }],
         xAxes: [{
@@ -49,7 +52,7 @@ const chartOptions = {
             ticks: {
                 source: 'data',
                 autoSkip: true,
-                maxTicksLimit: 20,
+                maxTicksLimit: 10,
             },
         }]
     }
@@ -57,7 +60,7 @@ const chartOptions = {
 
 
 
-class Chart extends React.Component<IProps, IState> {
+class Espresso extends React.Component<IProps, IState> {
     ws = new WebSocket(`ws://${ARDUINO_IP.ARDUINO_IP}:90/ws`);
 
     private myRef: React.RefObject<Line>;
@@ -102,6 +105,7 @@ class Chart extends React.Component<IProps, IState> {
     }
 
     componentDidMount() {
+        this.myRef.current?.chartInstance.update();
         this.setState({ wsConnected: false });
 
         fetch(`http://${ARDUINO_IP.ARDUINO_IP}:80/steaming`)
@@ -134,13 +138,6 @@ class Chart extends React.Component<IProps, IState> {
     setSteamingState(state: boolean) {
         this.setState({ steaming: state })
     }
-
-    handleChange = (event: React.SyntheticEvent | Event, value: number | number[]) => {
-        console.log(value);
-        fetch(`http://${ARDUINO_IP.ARDUINO_IP}:8080/steaming`, { method: 'PUT', body: JSON.stringify({ "temp": value.toString() }) })
-            .then(response => response.text());
-    };
-    //
 
     startConnection = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (this.state.wsConnected) {
@@ -220,8 +217,9 @@ class Chart extends React.Component<IProps, IState> {
                         <div>
                             <p>Temperature</p>
                             <div id="gauge3" className="gauge-container three">
-                                <span>{this.state.temp}</span>
+                                <span className="time">{this.state.temp}</span>
                             </div>
+                            <Timer></Timer>
                             <p>Connect</p>
                             <Switch
                                 checked={this.state.wsConnected}
@@ -235,10 +233,14 @@ class Chart extends React.Component<IProps, IState> {
                                 inputProps={{ 'aria-label': 'controlled' }}
                             />
                         </div>
-
                     </div>
                 </div>
-                <div>
+                <div className="row">
+                    <div className="col-3"></div>
+                    <div className="col-1">
+
+                    </div>
+
                 </div>
             </div>
 
@@ -246,4 +248,4 @@ class Chart extends React.Component<IProps, IState> {
     }
 }
 
-export default Chart;
+export default Espresso;

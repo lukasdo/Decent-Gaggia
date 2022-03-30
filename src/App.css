@@ -51,6 +51,7 @@
   /* flex-basis: 100%; */
   flex: 1;
   align-self: flex-start;
+  margin: auto;
 }
 .col-3 {
   display: flex;
@@ -62,6 +63,7 @@
 
 .container {
   width: 90%;
+  margin: auto;
 }
 
 @media (max-width: 600px) {
