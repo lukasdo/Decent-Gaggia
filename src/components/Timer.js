@@ -9,6 +9,10 @@ const Timer = () => {
 
     function toggle() {
         setIsActive(!isActive);
+        toggleBrewPID();
+    }
+
+    function toggleBrewPID() {
         let formData = new FormData();
         formData.append('brewing', isActive ? '1' : '0');
         fetch(`http://${ARDUINO_IP.ARDUINO_IP}:80/brewing`,
@@ -20,10 +24,10 @@ const Timer = () => {
                 console.error(error);
             });
     }
-
     function reset() {
         setSeconds(0);
         setIsActive(false);
+        toggleBrewPID();
     }
 
     useEffect(() => {
