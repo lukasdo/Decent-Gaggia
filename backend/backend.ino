@@ -1,5 +1,4 @@
 #include <PID_v1.h>
-#include <PSM.h>
 #include <AsyncWebSocket.h>
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
@@ -56,8 +55,6 @@ void brewDetection(bool isBrewingActivated)
   {
     Serial.println("Brewing activated");
      myPID.SetTunings(Kp+20, 0, 50);
-     value = 127 - 5 * 12;
-      pump.set(value);
   }
   else
   {
