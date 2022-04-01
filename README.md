@@ -1,3 +1,4 @@
+![Group 4](https://user-images.githubusercontent.com/44913260/160802947-6aca768c-5619-4670-83ce-591fc2acfbc8.svg)
 
 # Intro
 
