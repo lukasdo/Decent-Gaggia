@@ -4,8 +4,7 @@ import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import PropTypes from 'prop-types';
 import * as React from 'react';
-import Chart from "./Chart";
-import Timer from './Timer';
+import Espresso from "./Espresso";
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -50,15 +49,12 @@ export default function BasicTabs() {
         <Box sx={{ width: '100%' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={value} onChange={handleChange} centered aria-label="basic tabs example">
-                    <Tab label="Basics" {...a11yProps(0)} />
-                    <Tab label="Shot Timer" {...a11yProps(1)} />
+                    <Tab label="Espresso" {...a11yProps(0)} />
+                    {/* <Tab label="Shot Timer" {...a11yProps(1)} /> */}
                 </Tabs>
             </Box>
             <TabPanel value={value} index={0}>
-                <Chart></Chart>
-            </TabPanel>
-            <TabPanel value={value} index={1}>
-                <Timer></Timer>
+                <Espresso></Espresso>
             </TabPanel>
         </Box>
     );

@@ -1,5 +1,4 @@
 #include <PID_v1.h>
-
 #include <AsyncWebSocket.h>
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
@@ -12,7 +11,6 @@
 #include "aWOT.h"
 #include "config.h"
 #include "StaticFiles.h"
-
 
 unsigned long thermoTimer;
 unsigned long myTime;
@@ -36,18 +34,35 @@ double temperature;
 double Setpoint, Input, Output;
 
 // PID Values
-double Kp = 60, Ki = 0, Kd = 3;
-
+double Kp = kpValue, Ki = kiValue, Kd = kdValue;
 PID myPID(&temperature, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
-
 int WindowSize = 5000;
 
 // Init the thermocouples with the appropriate pins defined above with the prefix "thermo"
 MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 
 bool isSteaming = false;
-
 #include "ISR.h"
+
+//##############################################################################################################################
+//###########################################___________BREWDETECTION________________###########################################
+//##############################################################################################################################
+
+void brewDetection(bool isBrewingActivated)
+{
+  if (otpimisedBrewing){
+    if (!isBrewingActivated)
+    {
+      Serial.println("Brewing activated");
+      myPID.SetTunings(kpOptimised, kiOptimised, kdOptimised);
+    }
+    else
+    {
+      Serial.println("Brewing deactivated");
+      myPID.SetTunings(Kp, Ki, Kd);
+    }
+  }
+}
 
 //##############################################################################################################################
 //###########################################___________SETUP____________________###############################################
@@ -96,19 +111,29 @@ void setup()
   app.route(staticFiles());
 
   // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
-  asyncServer.on("/steaming", HTTP_GET, [](AsyncWebServerRequest *request) { 
-    request->send(200, "text/plain", isSteaming ? "true" : "false"); 
-  });
+  asyncServer.on("/steaming", HTTP_GET, [](AsyncWebServerRequest *request)
+                 { request->send(200, "text/plain", isSteaming ? "true" : "false"); });
 
-  asyncServer.on("/steaming", HTTP_POST, [](AsyncWebServerRequest *request) { 
+  asyncServer.on("/steaming", HTTP_POST, [](AsyncWebServerRequest *request)
+                 { 
    if(request->hasParam("steaming", true)) {
     AsyncWebParameter* p = request->getParam("steaming", true); 
     isSteaming = (p->value()  != "0");
     request->send(200, "text/plain", isSteaming ? "true" : "false");
-    }
-  });
+    } });
 
-  asyncServer.onNotFound([](AsyncWebServerRequest *request) {
+  asyncServer.on("/brewing", HTTP_POST, [](AsyncWebServerRequest *request)
+                 { 
+    bool isBrewing = false;
+   if(request->hasParam("brewing", true)) {
+    AsyncWebParameter* p = request->getParam("brewing", true); 
+    isBrewing = (p->value()  != "0");
+    brewDetection(isBrewing);
+    request->send(200);
+    } });
+
+  asyncServer.onNotFound([](AsyncWebServerRequest *request)
+                         {
   if (request->method() == HTTP_OPTIONS) {
       AsyncWebServerResponse * response = request->beginResponse(200);
         response->addHeader("Access-Control-Max-Age", "10000");
@@ -163,20 +188,17 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 //##############################################################################################################################
 //###########################################___________THERMOCOUPLE_READ________###############################################
 //##############################################################################################################################
-
-// K-TYPE thermocouple read function
 void kThermoRead()
-{ // Reading the thermocouple temperature
+{ 
   // Reading the temperature every 350ms between the loops
   if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
   {
-    temperature = thermocouple.readCelsius(); // Making sure we're getting a value
+    temperature = thermocouple.readCelsius(); 
     while (temperature <= 0 || temperature == NAN || temperature > 170.0)
     {
-      digitalWrite(relayPin, LOW); // relayPin -> LOW
       if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
       {
-        temperature = thermocouple.readCelsius(); // Making sure we're getting a value
+        temperature = thermocouple.readCelsius();
         thermoTimer = millis();
       }
     }
@@ -185,9 +207,8 @@ void kThermoRead()
 }
 
 //##############################################################################################################################
-//###########################################___________HEAT_____________________###############################################
+//###########################################___________WEBSOCKET________________###############################################
 //##############################################################################################################################
-
 void wsSendData()
 {
   if (globalClient != NULL && globalClient->status() == WS_CONNECTED)
@@ -207,9 +228,9 @@ void wsSendData()
 }
 
 //##############################################################################################################################
-//###########################################___________LOOP_____________________###############################################
+//###########################################___________BREWMODE________________################################################
 //##############################################################################################################################
-void loop()
+void checkBrewMode()
 {
   if (isSteaming)
   {
@@ -219,7 +240,14 @@ void loop()
   {
     Setpoint = espressoSetPoint;
   }
- 
+}
+
+//##############################################################################################################################
+//###########################################___________LOOP_____________________###############################################
+//##############################################################################################################################
+void loop()
+{
+  checkBrewMode();
   ArduinoOTA.handle();
   WiFiClient client = server.available();
   kThermoRead();
