@@ -12,7 +12,6 @@
 #include "config.h"
 #include "StaticFiles.h"
 
-
 unsigned long thermoTimer;
 unsigned long myTime;
 
@@ -35,7 +34,7 @@ double temperature;
 double Setpoint, Input, Output;
 
 // PID Values
-double Kp = 60, Ki = 0, Kd = 3;
+double Kp = kpValue, Ki = kiValue, Kd = kdValue;
 PID myPID(&temperature, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 int WindowSize = 5000;
 
@@ -51,19 +50,19 @@ bool isSteaming = false;
 
 void brewDetection(bool isBrewingActivated)
 {
-   if (!isBrewingActivated)
-  {
-    Serial.println("Brewing activated");
-     myPID.SetTunings(Kp+20, 0, 50);
-  }
-  else
-  {
-    Serial.println("Brewing deactivated");
-    myPID.SetTunings( Kp, Ki, Kd);
-
+  if (otpimisedBrewing){
+    if (!isBrewingActivated)
+    {
+      Serial.println("Brewing activated");
+      myPID.SetTunings(kpOptimised, kiOptimised, kdOptimised);
+    }
+    else
+    {
+      Serial.println("Brewing deactivated");
+      myPID.SetTunings(Kp, Ki, Kd);
+    }
   }
 }
-
 
 //##############################################################################################################################
 //###########################################___________SETUP____________________###############################################
@@ -112,30 +111,29 @@ void setup()
   app.route(staticFiles());
 
   // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
-  asyncServer.on("/steaming", HTTP_GET, [](AsyncWebServerRequest *request) { 
-    request->send(200, "text/plain", isSteaming ? "true" : "false"); 
-  });
+  asyncServer.on("/steaming", HTTP_GET, [](AsyncWebServerRequest *request)
+                 { request->send(200, "text/plain", isSteaming ? "true" : "false"); });
 
-  asyncServer.on("/steaming", HTTP_POST, [](AsyncWebServerRequest *request) { 
+  asyncServer.on("/steaming", HTTP_POST, [](AsyncWebServerRequest *request)
+                 { 
    if(request->hasParam("steaming", true)) {
     AsyncWebParameter* p = request->getParam("steaming", true); 
     isSteaming = (p->value()  != "0");
     request->send(200, "text/plain", isSteaming ? "true" : "false");
-    }
-  });
+    } });
 
-
-  asyncServer.on("/brewing", HTTP_POST, [](AsyncWebServerRequest *request) { 
+  asyncServer.on("/brewing", HTTP_POST, [](AsyncWebServerRequest *request)
+                 { 
     bool isBrewing = false;
    if(request->hasParam("brewing", true)) {
     AsyncWebParameter* p = request->getParam("brewing", true); 
     isBrewing = (p->value()  != "0");
     brewDetection(isBrewing);
     request->send(200);
-    }
-  });
+    } });
 
-  asyncServer.onNotFound([](AsyncWebServerRequest *request) {
+  asyncServer.onNotFound([](AsyncWebServerRequest *request)
+                         {
   if (request->method() == HTTP_OPTIONS) {
       AsyncWebServerResponse * response = request->beginResponse(200);
         response->addHeader("Access-Control-Max-Age", "10000");
@@ -239,7 +237,7 @@ void wsSendData()
 
 void checkBrewMode()
 {
-   if (isSteaming)
+  if (isSteaming)
   {
     Setpoint = steamingSetPoint;
   }
