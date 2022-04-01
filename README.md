@@ -37,6 +37,7 @@ See [Wiki Page](https://github.com/lukasdo/Decent-Gaggia/wiki/Running-the-projec
 
 # Tech stack
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app) and [Awot](https://awot.net/en/guide/tutorial.html)
+This project is using [React](https://github.com/facebook/create-react-app) and [Awot](https://awot.net/en/guide/tutorial.html).
+
 
 
