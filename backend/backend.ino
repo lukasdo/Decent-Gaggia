@@ -1,5 +1,5 @@
 #include <PID_v1.h>
-
+#include <PSM.h>
 #include <AsyncWebSocket.h>
 #include <ArduinoJson.h>
 #include <AsyncTCP.h>
@@ -37,17 +37,36 @@ double Setpoint, Input, Output;
 
 // PID Values
 double Kp = 60, Ki = 0, Kd = 3;
-
 PID myPID(&temperature, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
-
 int WindowSize = 5000;
 
 // Init the thermocouples with the appropriate pins defined above with the prefix "thermo"
 MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 
 bool isSteaming = false;
-
 #include "ISR.h"
+
+//##############################################################################################################################
+//###########################################___________BREWDETECTION________________###############################################
+//##############################################################################################################################
+
+void brewDetection(bool isBrewingActivated)
+{
+   if (!isBrewingActivated)
+  {
+    Serial.println("Brewing activated");
+     myPID.SetTunings(Kp+20, 0, 50);
+     value = 127 - 5 * 12;
+      pump.set(value);
+  }
+  else
+  {
+    Serial.println("Brewing deactivated");
+    myPID.SetTunings( Kp, Ki, Kd);
+
+  }
+}
+
 
 //##############################################################################################################################
 //###########################################___________SETUP____________________###############################################
@@ -105,6 +124,17 @@ void setup()
     AsyncWebParameter* p = request->getParam("steaming", true); 
     isSteaming = (p->value()  != "0");
     request->send(200, "text/plain", isSteaming ? "true" : "false");
+    }
+  });
+
+
+  asyncServer.on("/brewing", HTTP_POST, [](AsyncWebServerRequest *request) { 
+    bool isBrewing = false;
+   if(request->hasParam("brewing", true)) {
+    AsyncWebParameter* p = request->getParam("brewing", true); 
+    isBrewing = (p->value()  != "0");
+    brewDetection(isBrewing);
+    request->send(200);
     }
   });
 
@@ -185,7 +215,7 @@ void kThermoRead()
 }
 
 //##############################################################################################################################
-//###########################################___________HEAT_____________________###############################################
+//###########################################___________WEBSOCKET________________###############################################
 //##############################################################################################################################
 
 void wsSendData()
@@ -207,11 +237,12 @@ void wsSendData()
 }
 
 //##############################################################################################################################
-//###########################################___________LOOP_____________________###############################################
+//###########################################___________BREWMODE________________###############################################
 //##############################################################################################################################
-void loop()
+
+void checkBrewMode()
 {
-  if (isSteaming)
+   if (isSteaming)
   {
     Setpoint = steamingSetPoint;
   }
@@ -219,7 +250,14 @@ void loop()
   {
     Setpoint = espressoSetPoint;
   }
- 
+}
+
+//##############################################################################################################################
+//###########################################___________LOOP_____________________###############################################
+//##############################################################################################################################
+void loop()
+{
+  checkBrewMode();
   ArduinoOTA.handle();
   WiFiClient client = server.available();
   kThermoRead();
