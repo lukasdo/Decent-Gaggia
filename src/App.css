@@ -18,7 +18,9 @@
   font-size: calc(10px + 2vmin);
   color: white;
 }
-
+.chart-container {
+  height: 80vh;
+}
 .App-link {
   color: #61dafb;
 }
