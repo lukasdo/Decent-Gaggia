@@ -226,12 +226,6 @@ class Espresso extends React.Component<IProps, IState> {
                                 onChange={this.startConnection}
                                 inputProps={{ 'aria-label': 'controlled' }}
                             />
-                            <p>Steaming</p>
-                            <Switch
-                                checked={this.state.steaming}
-                                onChange={this.changeSteamingState}
-                                inputProps={{ 'aria-label': 'controlled' }}
-                            />
                         </div>
                     </div>
                 </div>
