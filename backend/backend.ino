@@ -12,6 +12,9 @@
 #include "config.h"
 #include "StaticFiles.h"
 
+
+#define pressurePin 33
+
 unsigned long thermoTimer;
 unsigned long myTime;
 
@@ -27,9 +30,10 @@ hw_timer_t *timer = NULL;
 const unsigned int windowSize = 1000;
 unsigned int isrCounter = 0; // counter for ISR
 AsyncWebSocketClient *globalClient = NULL;
-
+  const float voltageOffset = 0.49; 
 bool relayState;
 double temperature;
+float pressure_bar;
 
 double Setpoint, Input, Output;
 
@@ -207,6 +211,20 @@ void kThermoRead()
 }
 
 //##############################################################################################################################
+//###########################################___PRESSURE_READ____________________###############################################
+//##############################################################################################################################
+void pressureReading()
+{ 
+  if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY){
+  float voltage = (analogRead(pressurePin)*5.0)/4096.0;   
+  float pressure_pascal = (3.0*((float)voltage-voltageOffset))*1000000.0;                       //calibrate here
+  pressure_bar = pressure_pascal/10e5;
+  float pressure_psi = pressure_bar*14.5038;
+ }
+}
+
+
+//##############################################################################################################################
 //###########################################___________WEBSOCKET________________###############################################
 //##############################################################################################################################
 void wsSendData()
@@ -216,6 +234,8 @@ void wsSendData()
     StaticJsonDocument<100> testDocument;
     testDocument["temp"] = temperature;
     testDocument["brewTemp"] = temperature;
+    
+    testDocument["pressure"] = pressure_bar;
     myTime = millis() / 1000;
     testDocument["brewTime"] = myTime;
 
@@ -248,6 +268,7 @@ void checkBrewMode()
 void loop()
 {
   checkBrewMode();
+  pressureReading();
   ArduinoOTA.handle();
   WiFiClient client = server.available();
   kThermoRead();
