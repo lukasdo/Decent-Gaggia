@@ -11,7 +11,13 @@ This project started with the idea to improve the well known Gaggia Classic. Ins
 
 
 ## Pulling a shot
+https://user-images.githubusercontent.com/44913260/161559660-9ee32d58-ba7f-4b82-88f2-ccb260526f93.mov
+
 https://user-images.githubusercontent.com/44913260/160293038-132dfd3f-46b5-47e0-9442-545ab9c723f5.mov
+
+
+
+
 
 # Features
 - [x] HMI using a modern frontend framework ( React )
