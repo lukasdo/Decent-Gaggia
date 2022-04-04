@@ -7,9 +7,8 @@ This project started with the idea to improve the well known Gaggia Classic. Ins
 
 
 # Live demo
+![iPhone X - Silver](https://user-images.githubusercontent.com/44913260/161556336-0b2c9a0b-f9bb-45ed-b797-c2e334e5dd0e.png)
 
-
-![iPhone X - Silver](https://user-images.githubusercontent.com/44913260/161289697-da7a7d5f-2ad3-405d-9e5c-08d7b408ceaa.png)
 
 ## Pulling a shot
 https://user-images.githubusercontent.com/44913260/160293038-132dfd3f-46b5-47e0-9442-545ab9c723f5.mov
