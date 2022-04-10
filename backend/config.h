@@ -23,4 +23,4 @@
 #define kdOptimised 50
 
 
-#define GET_KTYPE_READ_EVERY 500 
+#define GET_KTYPE_READ_EVERY 350 

@@ -14,6 +14,7 @@
 
 unsigned long thermoTimer;
 unsigned long myTime;
+unsigned long wsTimer;
 
 WiFiServer server(8080);
 Application app;
@@ -210,7 +211,8 @@ void pressureReading()
 //##############################################################################################################################
 void wsSendData()
 {
-  if (globalClient != NULL && globalClient->status() == WS_CONNECTED)
+  
+  if (globalClient != NULL && globalClient->status() == WS_CONNECTED && (millis() - wsTimer) > GET_KTYPE_READ_EVERY)
   {
     StaticJsonDocument<100> payload;
 
@@ -225,6 +227,8 @@ void wsSendData()
     serializeJson(payload, buffer);
 
     globalClient->text(buffer);
+    
+    wsTimer = millis();
   }
 }
 
@@ -234,10 +238,11 @@ void wsSendData()
 void loop()
 {
   ArduinoOTA.handle();
+  WiFiClient client = server.available();
+  
   kThermoRead();
   pressureReading();
 
-  WiFiClient client = server.available();
   if (client.connected())
   {
     app.process(&client);
