@@ -14,24 +14,26 @@
 
 unsigned long thermoTimer;
 unsigned long myTime;
+unsigned long wsTimer;
 
 WiFiServer server(8080);
 Application app;
+
 AsyncWebServer webSocketServer(90);
 AsyncWebSocket ws("/ws");
 
-// Create AsyncWebServer object on port 80
 AsyncWebServer asyncServer(80);
 hw_timer_t *timer = NULL;
 
 const unsigned int windowSize = 1000;
 unsigned int isrCounter = 0; // counter for ISR
+
 AsyncWebSocketClient *globalClient = NULL;
+const float voltageOffset = 0.49;
 
-bool relayState;
-double temperature;
+float pressure_bar;
 
-double Setpoint, Input, Output;
+double Setpoint, Input, Output, temperature;
 
 // PID Values
 double Kp = kpValue, Ki = kiValue, Kd = kdValue;
@@ -41,16 +43,15 @@ int WindowSize = 5000;
 // Init the thermocouples with the appropriate pins defined above with the prefix "thermo"
 MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 
-bool isSteaming = false;
 #include "ISR.h"
 
 //##############################################################################################################################
 //###########################################___________BREWDETECTION________________###########################################
 //##############################################################################################################################
-
 void brewDetection(bool isBrewingActivated)
 {
-  if (otpimisedBrewing){
+  if (otpimisedBrewing)
+  {
     if (!isBrewingActivated)
     {
       Serial.println("Brewing activated");
@@ -110,18 +111,6 @@ void setup()
 
   app.route(staticFiles());
 
-  // Send a GET request to <ESP_IP>/update?output=<inputMessage1>&state=<inputMessage2>
-  asyncServer.on("/steaming", HTTP_GET, [](AsyncWebServerRequest *request)
-                 { request->send(200, "text/plain", isSteaming ? "true" : "false"); });
-
-  asyncServer.on("/steaming", HTTP_POST, [](AsyncWebServerRequest *request)
-                 { 
-   if(request->hasParam("steaming", true)) {
-    AsyncWebParameter* p = request->getParam("steaming", true); 
-    isSteaming = (p->value()  != "0");
-    request->send(200, "text/plain", isSteaming ? "true" : "false");
-    } });
-
   asyncServer.on("/brewing", HTTP_POST, [](AsyncWebServerRequest *request)
                  { 
     bool isBrewing = false;
@@ -170,16 +159,13 @@ void setup()
 //##############################################################################################################################
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
 {
-
   if (type == WS_EVT_CONNECT)
   {
-
     Serial.println("Websocket client connection received");
     globalClient = client;
   }
   else if (type == WS_EVT_DISCONNECT)
   {
-
     Serial.println("Websocket client connection finished");
     globalClient = NULL;
   }
@@ -189,11 +175,11 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 //###########################################___________THERMOCOUPLE_READ________###############################################
 //##############################################################################################################################
 void kThermoRead()
-{ 
+{
   // Reading the temperature every 350ms between the loops
   if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
   {
-    temperature = thermocouple.readCelsius(); 
+    temperature = thermocouple.readCelsius();
     while (temperature <= 0 || temperature == NAN || temperature > 170.0)
     {
       if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
@@ -207,38 +193,42 @@ void kThermoRead()
 }
 
 //##############################################################################################################################
-//###########################################___________WEBSOCKET________________###############################################
+//###########################################___PRESSURE_READ____________________###############################################
 //##############################################################################################################################
-void wsSendData()
+void pressureReading()
 {
-  if (globalClient != NULL && globalClient->status() == WS_CONNECTED)
+  if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
   {
-    StaticJsonDocument<100> testDocument;
-    testDocument["temp"] = temperature;
-    testDocument["brewTemp"] = temperature;
-    myTime = millis() / 1000;
-    testDocument["brewTime"] = myTime;
-
-    char buffer[100];
-    delay(500);
-    serializeJson(testDocument, buffer);
-
-    globalClient->text(buffer);
+    float voltage = (analogRead(pressurePin) * 5.0) / 4096.0;
+    float pressure_pascal = (3.0 * ((float)voltage - voltageOffset)) * 1000000.0; // calibrate here
+    pressure_bar = pressure_pascal / 10e5;
+    float pressure_psi = pressure_bar * 14.5038;
   }
 }
 
 //##############################################################################################################################
-//###########################################___________BREWMODE________________################################################
+//###########################################___________WEBSOCKET________________###############################################
 //##############################################################################################################################
-void checkBrewMode()
+void wsSendData()
 {
-  if (isSteaming)
+  
+  if (globalClient != NULL && globalClient->status() == WS_CONNECTED && (millis() - wsTimer) > GET_KTYPE_READ_EVERY)
   {
-    Setpoint = steamingSetPoint;
-  }
-  else
-  {
-    Setpoint = espressoSetPoint;
+    StaticJsonDocument<100> payload;
+
+    payload["temp"] = temperature;
+    payload["brewTemp"] = temperature;
+    payload["pressure"] = pressure_bar;
+
+    myTime = millis() / 1000;
+    payload["brewTime"] = myTime;
+
+    char buffer[100];
+    serializeJson(payload, buffer);
+
+    globalClient->text(buffer);
+    
+    wsTimer = millis();
   }
 }
 
@@ -247,10 +237,12 @@ void checkBrewMode()
 //##############################################################################################################################
 void loop()
 {
-  checkBrewMode();
   ArduinoOTA.handle();
   WiFiClient client = server.available();
+  
   kThermoRead();
+  pressureReading();
+
   if (client.connected())
   {
     app.process(&client);

@@ -7,13 +7,14 @@
 #define relayPin 14  // SSR VCC pin
 
 #define espressoSetPoint 96
-#define steamingSetPoint 122
 
+
+#define pressurePin 33
 
 //PID defaults
-#define kpValue 60
+#define kpValue 70
 #define kiValue 0
-#define kdValue 3
+#define kdValue 10
 
 //PID for optimised brewing
 #define otpimisedBrewing false // fales = DISABLED, true = ENABLED, Enables other PID values while the timer is running
@@ -22,4 +23,4 @@
 #define kdOptimised 50
 
 
-#define GET_KTYPE_READ_EVERY 500 
+#define GET_KTYPE_READ_EVERY 350 

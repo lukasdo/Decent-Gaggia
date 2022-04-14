@@ -8,6 +8,7 @@ import Timer from "./Timer";
 interface IMessage {
     temp: number;
     brewTemp: number;
+    pressure: number;
     brewTime: number;
 }
 
@@ -18,27 +19,42 @@ interface IState {
     update: boolean;
     temp: number;
     brewTemp: number[];
+    pressure: number[];
     brewTime: number[];
     setPoint: number;
     data: ChartComponentProps;
-    steaming: boolean;
     startUp: boolean;
     wsConnected: boolean;
 
 }
 
 const chartOptions = {
-    maintainAspectRatio: false,
     responsive: true,
+    maintainAspectRatio: false,
+    elements: {
+        point:{
+            radius: 0
+        }
+    },
     scales: {
         yAxes: [{
-            display: true,
+            position: "right",
+            "id": "pressure",
+            gridLines: {
+                display:false
+            },
             ticks: {
-                suggestedMin: 80,    // minimum will be 0, unless there is a lower value.
-
+                suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
                 maxTicksLimit: 5,
             }
-        }],
+          }, {
+            position: "left",
+            "id": "temp",
+            ticks: {
+                suggestedMin: 80,    // minimum will be 0, unless there is a lower value.
+                maxTicksLimit: 5,
+            }
+          }],
         xAxes: [{
             type: 'time',
             time: {
@@ -66,7 +82,6 @@ class Espresso extends React.Component<IProps, IState> {
     private myRef: React.RefObject<Line>;
     constructor(props: IProps) {
         super(props);
-        this.changeSteamingState = this.changeSteamingState.bind(this);
         this.myRef = React.createRef();
 
         let sessionData = sessionStorage.getItem('data');
@@ -79,11 +94,11 @@ class Espresso extends React.Component<IProps, IState> {
             this.state = {
                 update: false,
                 temp: 20,
+                pressure: [],
                 brewTemp: [],
                 brewTime: [],
                 setPoint: 95,
                 startUp: false,
-                steaming: false,
                 wsConnected: false,
                 data: {
                     data: {
@@ -107,16 +122,6 @@ class Espresso extends React.Component<IProps, IState> {
     componentDidMount() {
         this.myRef.current?.chartInstance.update();
         this.setState({ wsConnected: false });
-
-        fetch(`http://${ARDUINO_IP.ARDUINO_IP}:80/steaming`)
-            .then(response => response.text())
-            .then((state) => {
-                this.setSteamingState(JSON.parse(state))
-            })
-            .catch(error => {
-                console.error(error);
-                alert("Could not fetch steaming state, setting default to espresso");
-            });
     }
 
     componentWillUnmount() {
@@ -132,11 +137,6 @@ class Espresso extends React.Component<IProps, IState> {
             return val;
         });
         sessionStorage.setItem('data', stringified);
-    }
-
-
-    setSteamingState(state: boolean) {
-        this.setState({ steaming: state })
     }
 
     startConnection = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,6 +161,7 @@ class Espresso extends React.Component<IProps, IState> {
                 temp: message.temp,
                 brewTime: [...this.state.brewTime, this.getTimeString()],
                 brewTemp: [...this.state.brewTemp, message.brewTemp],
+                pressure: [...this.state.pressure, message.pressure],
                 data: {
                     data: {
                         labels: this.state.brewTime,
@@ -168,9 +169,18 @@ class Espresso extends React.Component<IProps, IState> {
                             {
                                 label: "Temperature",
                                 data: this.state.brewTemp,
-                                fill: true,
                                 backgroundColor: "rgba(75,192,192,0.2)",
-                                borderColor: "rgba(75,192,192,1)"
+                                borderColor: "rgba(75,192,192,0.6)",
+                                yAxisID: 'temp',
+                                fill:false,
+                            },
+                            {
+                                label: "Pressure",
+                                data: this.state.pressure,
+                                backgroundColor: "rgba(0, 72, 255, 0.8)",
+                                borderColor: "rgba(0, 72, 255, 0.6)",
+                                yAxisID: 'pressure',
+                                fill:false,
                             },
                         ]
                     }
@@ -189,20 +199,6 @@ class Espresso extends React.Component<IProps, IState> {
         this.ws.close();
     }
 
-    changeSteamingState(event: React.ChangeEvent<HTMLInputElement>) {
-        let formData = new FormData();
-        formData.append('steaming', event.target.checked ? '1' : '0');
-        fetch(`http://${ARDUINO_IP.ARDUINO_IP}:80/steaming`,
-            {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(state => this.setSteamingState(JSON.parse(state)))
-            .catch(error => {
-                console.error(error);
-            });
-    }
 
 
     render() {
@@ -210,8 +206,10 @@ class Espresso extends React.Component<IProps, IState> {
             <div className="container">
                 <div className="row">
                     <div className="col-3">
+                        <div className="chart-container">
 
                         <Line ref={this.myRef} options={chartOptions} data={this.state.data.data} />
+                        </div>
                     </div>
                     <div className="col-1">
                         <div>
@@ -224,12 +222,6 @@ class Espresso extends React.Component<IProps, IState> {
                             <Switch
                                 checked={this.state.wsConnected}
                                 onChange={this.startConnection}
-                                inputProps={{ 'aria-label': 'controlled' }}
-                            />
-                            <p>Steaming</p>
-                            <Switch
-                                checked={this.state.steaming}
-                                onChange={this.changeSteamingState}
                                 inputProps={{ 'aria-label': 'controlled' }}
                             />
                         </div>
