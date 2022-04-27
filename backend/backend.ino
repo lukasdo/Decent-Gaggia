@@ -32,6 +32,13 @@ AsyncWebSocketClient *globalClient = NULL;
 const float voltageOffset = 0.49;
 
 float pressure_bar;
+const int numReadings = 100;
+
+float readings[numReadings];      // the readings from the analog input
+int readIndex = 0;              // the index of the current reading
+float total = 0;                  // the running total
+int average = 0;                // the average
+
 
 double Setpoint, Input, Output, temperature;
 
@@ -133,6 +140,11 @@ void setup()
     request->send(404);
   } });
 
+  // initialize all the readings to 0:
+  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
+    readings[thisReading] = 0;
+  }
+  
   // Enable cors
   DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
   server.begin();
@@ -195,24 +207,24 @@ void kThermoRead()
 //##############################################################################################################################
 //###########################################___PRESSURE_READ____________________###############################################
 //##############################################################################################################################
-void pressureReading()
+float pressureReading()
 {
   
-          Serial.println("Read pressure");
     float voltage = (analogRead(pressurePin) * 5.0) / 4096.0;
     float pressure_pascal = (3.0 * ((float)voltage - voltageOffset)) * 1000000.0; // calibrate here
-    pressure_bar = pressure_pascal / 10e5;
-    float pressure_psi = pressure_bar * 14.5038;
+    float pressure_bare = pressure_pascal / 10e5;
+    return pressure_bare;
+
 }
 
-void readings() {
+void readDataAndSend() {
     // Reading the temperature every 350ms between the loops
 
 
   if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
-        Serial.println("Measure");
-        pressureReading();
+
         kThermoRead();
+
         thermoTimer = millis();
   }
       
@@ -245,20 +257,42 @@ void wsSendData()
   }
 }
 
+void smoothingPressure() {
+  total = total - readings[readIndex];
+  // read from the sensor:
+  readings[readIndex] = pressureReading();
+  // add the reading to the total:
+  total = total + readings[readIndex];
+  // advance to the next position in the array:
+  readIndex = readIndex + 1;
+
+  // if we're at the end of the array...
+  if (readIndex >= numReadings) {
+    // ...wrap around to the beginning:
+    readIndex = 0;
+  }
+
+  // calculate the average:
+  pressure_bar = total / numReadings;
+  Serial.println(pressure_bar);
+  // send it to the computer as ASCII digits
+
+}
+
 //##############################################################################################################################
 //###########################################___________LOOP_____________________###############################################
 //##############################################################################################################################
 void loop()
 {
   ArduinoOTA.handle();
-  WiFiClient client = server.available();
-
-  readings();
-
-
-  if (client.connected())
+    WiFiClient client = server.available();
+          if (client.connected())
   {
     app.process(&client);
   }
+  smoothingPressure();
+  readDataAndSend();
+
   wsSendData();
+
 }
