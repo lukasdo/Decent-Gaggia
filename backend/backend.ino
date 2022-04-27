@@ -176,20 +176,20 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 //##############################################################################################################################
 void kThermoRead()
 {
-  // Reading the temperature every 350ms between the loops
-  if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
-  {
     temperature = thermocouple.readCelsius();
-    while (temperature <= 0 || temperature == NAN || temperature > 170.0)
+    if (temperature == NAN) {
+      Serial.println("Are you sure there is a thermocouple connected?");
+    } else {
+      while (temperature <= 0 || temperature > 170.0)
     {
       if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
       {
+          Serial.println("Read temp?");
         temperature = thermocouple.readCelsius();
         thermoTimer = millis();
       }
     }
-    thermoTimer = millis();
-  }
+    }
 }
 
 //##############################################################################################################################
@@ -197,13 +197,26 @@ void kThermoRead()
 //##############################################################################################################################
 void pressureReading()
 {
-  if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
-  {
+  
+          Serial.println("Read pressure");
     float voltage = (analogRead(pressurePin) * 5.0) / 4096.0;
     float pressure_pascal = (3.0 * ((float)voltage - voltageOffset)) * 1000000.0; // calibrate here
     pressure_bar = pressure_pascal / 10e5;
     float pressure_psi = pressure_bar * 14.5038;
+}
+
+void readings() {
+    // Reading the temperature every 350ms between the loops
+
+
+  if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
+        Serial.println("Measure");
+        pressureReading();
+        kThermoRead();
+        thermoTimer = millis();
   }
+      
+
 }
 
 //##############################################################################################################################
@@ -239,9 +252,9 @@ void loop()
 {
   ArduinoOTA.handle();
   WiFiClient client = server.available();
-  
-  kThermoRead();
-  pressureReading();
+
+  readings();
+
 
   if (client.connected())
   {
