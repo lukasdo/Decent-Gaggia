@@ -184,7 +184,6 @@ void kThermoRead()
     {
       if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
       {
-          Serial.println("Read temp?");
         temperature = thermocouple.readCelsius();
         thermoTimer = millis();
       }
@@ -197,8 +196,6 @@ void kThermoRead()
 //##############################################################################################################################
 void pressureReading()
 {
-  
-          Serial.println("Read pressure");
     float voltage = (analogRead(pressurePin) * 5.0) / 4096.0;
     float pressure_pascal = (3.0 * ((float)voltage - voltageOffset)) * 1000000.0; // calibrate here
     pressure_bar = pressure_pascal / 10e5;
@@ -210,7 +207,6 @@ void readings() {
 
 
   if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
-        Serial.println("Measure");
         pressureReading();
         kThermoRead();
         thermoTimer = millis();
