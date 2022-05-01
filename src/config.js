@@ -1,3 +1,3 @@
 export default {
-    ARDUINO_IP : '192.168.2.116'
+    ARDUINO_IP : '192.168.50.87'
 }

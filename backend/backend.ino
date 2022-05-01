@@ -32,7 +32,7 @@ AsyncWebSocketClient *globalClient = NULL;
 const float voltageOffset = 0.49;
 
 float pressure_bar;
-
+bool brewSwitch;
 double Setpoint, Input, Output, temperature;
 
 // PID Values
@@ -74,6 +74,12 @@ void setup()
   // relay port init and set initial operating mode
   Setpoint = espressoSetPoint;
   pinMode(relayPin, OUTPUT);
+  pinMode(pumpPin, OUTPUT);
+  pinMode(solenoidPin, OUTPUT);
+  pinMode(optoPin, INPUT);
+  digitalWrite(pumpPin, HIGH);
+  digitalWrite(solenoidPin, LOW);
+
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED)
@@ -184,6 +190,7 @@ void kThermoRead()
     {
       if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
       {
+          Serial.println("Read temp?");
         temperature = thermocouple.readCelsius();
         thermoTimer = millis();
       }
@@ -191,29 +198,59 @@ void kThermoRead()
     }
 }
 
+
+//##############################################################################################################################
+//###########################################___________OPTOCOUPLER_READ________################################################
+//##############################################################################################################################
+void readOpto()
+{
+  brewSwitch = digitalRead(optoPin);
+}
+
+
 //##############################################################################################################################
 //###########################################___PRESSURE_READ____________________###############################################
 //##############################################################################################################################
 void pressureReading()
 {
-    float voltage = (analogRead(pressurePin) * 5.0) / 4096.0;
-    float pressure_pascal = (3.0 * ((float)voltage - voltageOffset)) * 1000000.0; // calibrate here
-    pressure_bar = pressure_pascal / 10e5;
-    float pressure_psi = pressure_bar * 14.5038;
+  const int numReadings = 250;    // number of readings to average
+  int total = 0;                  // the running total of measurements
+  int average = 0;                // the average measurement
+  const float OffSet = 0.464 ;
+  float V;  
+
+  Serial.println("Read pressure");  
+  for (int i=0; i<= numReadings; i++)
+  {
+    total = total + analogRead(pressurePin);
+  }   
+  average = total / numReadings;  
+  V = average * 3.30 / 4095;
+  pressure_bar = (((V*2)-OffSet)*4*0.62)*1.125+0.565; //Calculate water pressure. The 0.62 is the correction factor after measuring with an analogue gauge. Pressure at group head.
+  if(pressure_bar <0)
+  {
+    pressure_bar = 0;
+  }
+  float pressure_psi = pressure_bar * 14.5038;  
 }
 
+
+//##############################################################################################################################
+//###########################################___________READINGS________________################################################
+//##############################################################################################################################
 void readings() {
     // Reading the temperature every 350ms between the loops
 
 
   if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
+        Serial.println("Measure");
         pressureReading();
         kThermoRead();
+        readOpto();
         thermoTimer = millis();
   }
-      
-
 }
+
 
 //##############################################################################################################################
 //###########################################___________WEBSOCKET________________###############################################
@@ -228,6 +265,8 @@ void wsSendData()
     payload["temp"] = temperature;
     payload["brewTemp"] = temperature;
     payload["pressure"] = pressure_bar;
+    payload["brewSwitch"] = brewSwitch;
+    
 
     myTime = millis() / 1000;
     payload["brewTime"] = myTime;
