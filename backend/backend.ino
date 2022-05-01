@@ -8,6 +8,8 @@
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 
+#include <RBDdimmer.h>//
+
 #include "aWOT.h"
 #include "config.h"
 #include "StaticFiles.h"
@@ -71,6 +73,8 @@ void brewDetection(bool isBrewingActivated)
 void setup()
 {
 
+  dimmer.begin(NORMAL_MODE, ON); //dimmer initialisation: name.begin(MODE, STATE) 
+
   // relay port init and set initial operating mode
   Setpoint = espressoSetPoint;
   pinMode(relayPin, OUTPUT);
@@ -79,6 +83,9 @@ void setup()
   pinMode(optoPin, INPUT);
   digitalWrite(pumpPin, HIGH);
   digitalWrite(solenoidPin, LOW);
+
+  dimmer.begin(NORMAL_MODE, OFF);
+  dimmer.setPower(100);
 
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -231,6 +238,7 @@ void pressureReading()
   {
     pressure_bar = 0;
   }
+
   float pressure_psi = pressure_bar * 14.5038;  
 }
 
