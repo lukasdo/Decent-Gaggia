@@ -1,5 +1,5 @@
-#define WIFI_SSID "TSAI_2.4GHz"
-#define WIFI_PASSWORD "Dalcroze2"
+#define WIFI_SSID "SSID"
+#define WIFI_PASSWORD "PASSWORD"
 
 #define thermoDO 19 // MAX6675 DO
 #define thermoCS 23 // MAX6675 CS
