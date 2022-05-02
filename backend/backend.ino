@@ -7,8 +7,7 @@
 #include <max6675.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-
-#include <RBDdimmer.h>//
+#include <PSM.h>
 
 #include "aWOT.h"
 #include "config.h"
@@ -17,6 +16,8 @@
 unsigned long thermoTimer;
 unsigned long myTime;
 unsigned long wsTimer;
+
+volatile unsigned int value; //dimmer value
 
 WiFiServer server(8080);
 Application app;
@@ -73,8 +74,6 @@ void brewDetection(bool isBrewingActivated)
 void setup()
 {
 
-  dimmer.begin(NORMAL_MODE, ON); //dimmer initialisation: name.begin(MODE, STATE) 
-
   // relay port init and set initial operating mode
   Setpoint = espressoSetPoint;
   pinMode(relayPin, OUTPUT);
@@ -84,8 +83,6 @@ void setup()
   digitalWrite(pumpPin, HIGH);
   digitalWrite(solenoidPin, LOW);
 
-  dimmer.begin(NORMAL_MODE, OFF);
-  dimmer.setPower(100);
 
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -242,6 +239,13 @@ void pressureReading()
   float pressure_psi = pressure_bar * 14.5038;  
 }
 
+void setPressure(int wantedValue)
+{
+  value=wantedValue;
+  value = 127 - (int)pressure_bar * 12;  
+  if (pressure_bar > (float)wantedValue) value = 0;  
+  pump.set(value);  
+}
 
 //##############################################################################################################################
 //###########################################___________READINGS________________################################################
@@ -254,6 +258,7 @@ void readings() {
         Serial.println("Measure");
         pressureReading();
         kThermoRead();
+        setPressure(9);        
         readOpto();
         thermoTimer = millis();
   }
@@ -297,7 +302,7 @@ void loop()
   WiFiClient client = server.available();
 
   readings();
-
+  
 
   if (client.connected())
   {

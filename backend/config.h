@@ -7,9 +7,13 @@
 #define relayPin 14  // SSR VCC pin
 #define solenoidPin 13  // Solenoid control pin
 #define optoPin 27  // Optocoupler pin
+
 #define pumpPin 12  // Pump control pin
 #define zeroCross  2 // for boards with CHANGEBLE input pins
-dimmerLamp dimmer(pumpPin, zeroCross); //initialase port for dimmer for ESP8266, ESP32, Arduino due boards
+//Banoz PSM for more cool shit visit https://github.com/banoz  and don't forget to star
+const unsigned int range = 127;
+PSM pump(zeroCross, pumpPin, range, FALLING);
+
 
 #define espressoSetPoint 40 //98
 
