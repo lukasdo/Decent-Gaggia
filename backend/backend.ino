@@ -35,7 +35,7 @@ AsyncWebSocketClient *globalClient = NULL;
 const float voltageOffset = 0.49;
 
 float pressure_bar;
-bool brewSwitch;
+bool brewSwitch,steamSwitch;
 double Setpoint, Input, Output, temperature;
 
 // PID Values
@@ -73,13 +73,13 @@ void brewDetection(bool isBrewingActivated)
 //##############################################################################################################################
 void setup()
 {
-
   // relay port init and set initial operating mode
   Setpoint = espressoSetPoint;
   pinMode(relayPin, OUTPUT);
   pinMode(pumpPin, OUTPUT);
   pinMode(solenoidPin, OUTPUT);
   pinMode(optoPin, INPUT);
+  pinMode(steamPin, INPUT_PULLUP);  
   digitalWrite(pumpPin, HIGH);
   digitalWrite(solenoidPin, LOW);
 
@@ -211,12 +211,27 @@ void readOpto()
   brewSwitch = digitalRead(optoPin);
 }
 
+//##############################################################################################################################
+//###########################################___________STEAM_READ________######################################################
+//##############################################################################################################################
+void readSteam()
+{
+  steamSwitch = digitalRead(steamPin);  
+  if (steamSwitch == 0){
+    Setpoint = steamSetPoint;
+  }
+  else{
+    Setpoint = espressoSetPoint;
+  }
+}
+
 
 //##############################################################################################################################
 //###########################################___PRESSURE_READ____________________###############################################
 //##############################################################################################################################
 void pressureReading()
 {
+
   const int numReadings = 250;    // number of readings to average
   int total = 0;                  // the running total of measurements
   int average = 0;                // the average measurement
@@ -241,25 +256,26 @@ void pressureReading()
 
 void setPressure(int wantedValue)
 {
+  pressureReading();
   value=wantedValue;
   value = 127 - (int)pressure_bar * 12;  
   if (pressure_bar > (float)wantedValue) value = 0;  
   pump.set(value);  
 }
 
+
+
 //##############################################################################################################################
 //###########################################___________READINGS________________################################################
 //##############################################################################################################################
 void readings() {
     // Reading the temperature every 350ms between the loops
-
-
+  readOpto();
+  readSteam(); 
   if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
         Serial.println("Measure");
         pressureReading();
         kThermoRead();
-        setPressure(9);        
-        readOpto();
         thermoTimer = millis();
   }
 }
@@ -275,9 +291,9 @@ void wsSendData()
   {
     StaticJsonDocument<100> payload;
 
-    payload["temp"] = temperature;
-    payload["brewTemp"] = temperature;
-    payload["pressure"] = pressure_bar;
+    payload["temp"] = temperature;        //temperature
+    payload["brewTemp"] = temperature;    //temperature
+    payload["pressure"] = pressure_bar;   //pressure_bar
     payload["brewSwitch"] = brewSwitch;
     
 
@@ -302,7 +318,8 @@ void loop()
   WiFiClient client = server.available();
 
   readings();
-  
+  setPressure(10);        
+
 
   if (client.connected())
   {

@@ -7,6 +7,8 @@
 #define relayPin 14  // SSR VCC pin
 #define solenoidPin 13  // Solenoid control pin
 #define optoPin 27  // Optocoupler pin
+#define steamPin 15  // Steam switch input
+
 
 #define pumpPin 12  // Pump control pin
 #define zeroCross  2 // for boards with CHANGEBLE input pins
@@ -15,7 +17,8 @@ const unsigned int range = 127;
 PSM pump(zeroCross, pumpPin, range, FALLING);
 
 
-#define espressoSetPoint 40 //98
+#define espressoSetPoint 96
+#define steamSetPoint 140
 
 #define pressurePin 34
 
