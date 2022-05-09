@@ -15,7 +15,9 @@
 
 unsigned long thermoTimer;
 unsigned long myTime;
+unsigned long shotTime;
 unsigned long wsTimer;
+bool shotStarted;
 
 volatile unsigned int value; //dimmer value
 
@@ -232,7 +234,7 @@ void readSteam()
 void pressureReading()
 {
 
-  const int numReadings = 250;    // number of readings to average
+  const int numReadings = 100;    // number of readings to average
   int total = 0;                  // the running total of measurements
   int average = 0;                // the average measurement
   const float OffSet = 0.464 ;
@@ -281,6 +283,29 @@ void readings() {
 }
 
 
+
+//##############################################################################################################################
+//###########################################___________SHOT MONITOR____________################################################
+//##############################################################################################################################
+void shotMonitor() {
+  if(!brewSwitch){
+    if(!shotStarted){
+      shotTime = millis();
+      shotStarted = true;
+    }
+    if((millis() - shotTime)  < preInfusionTime*1000){
+        setPressure(preInfusionPressure);        
+    }
+    else{
+        setPressure(shotPressure);
+    }           
+  }
+  else{
+    shotStarted = false;    
+  }
+}
+
+
 //##############################################################################################################################
 //###########################################___________WEBSOCKET________________###############################################
 //##############################################################################################################################
@@ -318,8 +343,7 @@ void loop()
   WiFiClient client = server.available();
 
   readings();
-  setPressure(10);        
-
+  shotMonitor();
 
   if (client.connected())
   {

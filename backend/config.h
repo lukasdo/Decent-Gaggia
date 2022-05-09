@@ -18,7 +18,11 @@ PSM pump(zeroCross, pumpPin, range, FALLING);
 
 
 #define espressoSetPoint 96
-#define steamSetPoint 140
+#define steamSetPoint 145
+
+#define preInfusionTime 8 
+#define preInfusionPressure 2
+#define shotPressure 9
 
 #define pressurePin 34
 
