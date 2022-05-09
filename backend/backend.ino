@@ -17,7 +17,10 @@ unsigned long thermoTimer;
 unsigned long myTime;
 unsigned long shotTime;
 unsigned long wsTimer;
+unsigned long psmCounter;
+unsigned long shotGrams;
 bool shotStarted;
+
 
 volatile unsigned int value; //dimmer value
 
@@ -272,6 +275,7 @@ void setPressure(int wantedValue)
 //##############################################################################################################################
 void readings() {
     // Reading the temperature every 350ms between the loops
+  shotGrams = psmCounter*psmToGrams;
   readOpto();
   readSteam(); 
   if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
@@ -289,15 +293,21 @@ void readings() {
 //##############################################################################################################################
 void shotMonitor() {
   if(!brewSwitch){
+    psmCounter = pump.getCounter();
     if(!shotStarted){
-      shotTime = millis();
+      shotTime = millis();      
+      psmCounter = 0;
+      pump.resetCounter();       
       shotStarted = true;
     }
     if((millis() - shotTime)  < preInfusionTime*1000){
-        setPressure(preInfusionPressure);        
+      setPressure(preInfusionPressure);
+      if(pressure_bar <1){   
+        pump.resetCounter(); 
+      }            
     }
     else{
-        setPressure(shotPressure);
+      setPressure(shotPressure);
     }           
   }
   else{
@@ -319,8 +329,8 @@ void wsSendData()
     payload["temp"] = temperature;        //temperature
     payload["brewTemp"] = temperature;    //temperature
     payload["pressure"] = pressure_bar;   //pressure_bar
-    payload["brewSwitch"] = brewSwitch;
-    
+    payload["brewSwitch"] = brewSwitch;   //brew switch status
+    payload["shotGrams"] = shotGrams;     //PSM calculated weight
 
     myTime = millis() / 1000;
     payload["brewTime"] = myTime;

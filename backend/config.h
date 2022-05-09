@@ -15,7 +15,7 @@
 //Banoz PSM for more cool shit visit https://github.com/banoz  and don't forget to star
 const unsigned int range = 127;
 PSM pump(zeroCross, pumpPin, range, FALLING);
-
+#define psmToGrams 100.6/19263
 
 #define espressoSetPoint 96
 #define steamSetPoint 145
