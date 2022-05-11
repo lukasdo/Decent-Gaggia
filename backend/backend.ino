@@ -302,7 +302,7 @@ void shotMonitor() {
     }
     if((millis() - shotTime)  < preInfusionTime*1000){
       setPressure(preInfusionPressure);
-      if(pressure_bar <1){   
+      if(pressure_bar < preInfusionPressure-0.5){   
         pump.resetCounter(); 
       }            
     }
