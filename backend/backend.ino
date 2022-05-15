@@ -21,7 +21,6 @@ unsigned long psmCounter;
 unsigned long shotGrams;
 bool shotStarted;
 
-
 volatile unsigned int value; //dimmer value
 
 WiFiServer server(8080);
@@ -87,7 +86,6 @@ void setup()
   pinMode(steamPin, INPUT_PULLUP);  
   digitalWrite(pumpPin, HIGH);
   digitalWrite(solenoidPin, LOW);
-
 
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -300,18 +298,18 @@ void shotMonitor() {
       pump.resetCounter();       
       shotStarted = true;
     }
+    if(pressure_bar < shotPressure - 2){
+      pump.resetCounter();      
+    }
     if((millis() - shotTime)  < preInfusionTime*1000){
       setPressure(preInfusionPressure);
-      if(pressure_bar < preInfusionPressure-0.5){   
-        pump.resetCounter(); 
-      }            
-    }
+    }            
     else{
       setPressure(shotPressure);
     }           
   }
   else{
-    shotStarted = false;    
+    shotStarted = false;
   }
 }
 

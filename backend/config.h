@@ -22,7 +22,7 @@ PSM pump(zeroCross, pumpPin, range, FALLING);
 
 #define preInfusionTime 8 
 #define preInfusionPressure 2
-#define shotPressure 9
+#define shotPressure 8
 
 #define pressurePin 34
 
