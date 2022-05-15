@@ -24,7 +24,7 @@ PSM pump(zeroCross, pumpPin, range, FALLING);
 #define preInfusionPressure 2
 #define shotPressure 8
 
-#define pressurePin 34
+#define pressurePin 35
 
 //PID defaults
 #define kpValue 70

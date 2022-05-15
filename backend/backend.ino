@@ -38,9 +38,8 @@ unsigned int isrCounter = 0; // counter for ISR
 AsyncWebSocketClient *globalClient = NULL;
 const float voltageOffset = 0.49;
 
-float pressure_bar;
 bool brewSwitch,steamSwitch;
-double Setpoint, Input, Output, temperature;
+double Setpoint, Input, Output, temperature, pressure_bar;
 
 // PID Values
 double Kp = kpValue, Ki = kiValue, Kd = kdValue;
@@ -297,15 +296,15 @@ void shotMonitor() {
       psmCounter = 0;
       pump.resetCounter();       
       shotStarted = true;
-    }
-    if(pressure_bar < shotPressure - 2){
-      pump.resetCounter();      
-    }
+    }   
     if((millis() - shotTime)  < preInfusionTime*1000){
       setPressure(preInfusionPressure);
     }            
     else{
-      setPressure(shotPressure);
+      setPressure(shotPressure);      
+      if(pressure_bar < shotPressure - 2){
+        pump.resetCounter();
+      }         
     }           
   }
   else{
@@ -326,7 +325,7 @@ void wsSendData()
 
     payload["temp"] = temperature;        //temperature
     payload["brewTemp"] = temperature;    //temperature
-    payload["pressure"] = pressure_bar;   //pressure_bar
+    payload["pressure"] = int(pressure_bar);   //pressure_bar
     payload["brewSwitch"] = brewSwitch;   //brew switch status
     payload["shotGrams"] = shotGrams;     //PSM calculated weight
 
