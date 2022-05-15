@@ -325,14 +325,14 @@ void wsSendData()
 
     payload["temp"] = temperature;        //temperature
     payload["brewTemp"] = temperature;    //temperature
-    payload["pressure"] = int(pressure_bar);   //pressure_bar
+    payload["pressure"] = pressure_bar;   //pressure_bar
     payload["brewSwitch"] = brewSwitch;   //brew switch status
     payload["shotGrams"] = shotGrams;     //PSM calculated weight
 
     myTime = millis() / 1000;
     payload["brewTime"] = myTime;
 
-    char buffer[100];
+    char buffer[200];
     serializeJson(payload, buffer);
 
     globalClient->text(buffer);

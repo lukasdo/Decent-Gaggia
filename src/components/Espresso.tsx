@@ -26,7 +26,7 @@ interface IState {
     data: ChartComponentProps;
     startUp: boolean;
     wsConnected: boolean;
-    shotGrams: number;
+    shotGrams: number[];
 
 }
 
@@ -101,7 +101,7 @@ class Espresso extends React.Component<IProps, IState> {
                 brewTime: [],
                 setPoint: 95,
                 startUp: false,
-                shotGrams: 0,
+                shotGrams: [],
                 wsConnected: false,
                 data: {
                     data: {
@@ -189,9 +189,9 @@ class Espresso extends React.Component<IProps, IState> {
                             {
                                 label: "Weight",
                                 data: this.state.shotGrams,
-                                backgroundColor: "rgba(0, 72, 255, 0.8)",
-                                borderColor: "rgba(0, 72, 255, 0.6)",
-                                yAxisID: 'Weight',
+                                backgroundColor: "rgba(255, 165, 0, 0.8)",
+                                borderColor: "rgba(255, 140, 0, 0.6)",
+                                yAxisID: 'pressure',
                                 fill: false,
                             },
                         ]

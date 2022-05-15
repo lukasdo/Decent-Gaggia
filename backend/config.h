@@ -17,7 +17,7 @@ const unsigned int range = 127;
 PSM pump(zeroCross, pumpPin, range, FALLING);
 #define psmToGrams 53.6/10958
 
-#define espressoSetPoint 96
+#define espressoSetPoint 94
 #define steamSetPoint 145
 
 #define preInfusionTime 8 
