@@ -165,6 +165,7 @@ class Espresso extends React.Component<IProps, IState> {
                 brewTime: [...this.state.brewTime, this.getTimeString()],
                 brewTemp: [...this.state.brewTemp, message.brewTemp],
                 pressure: [...this.state.pressure, message.pressure],
+                shotGrams: [...this.state.shotGrams, message.shotGrams],
                 data: {
                     data: {
                         labels: this.state.brewTime,
