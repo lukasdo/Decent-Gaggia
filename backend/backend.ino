@@ -294,11 +294,11 @@ void shotMonitor() {
     if(!shotStarted){
       shotTime = millis();      
       psmCounter = 0;
-      pump.resetCounter();       
       shotStarted = true;
     }   
     if((millis() - shotTime)  < preInfusionTime*1000){
       setPressure(preInfusionPressure);
+      pump.resetCounter();      
     }            
     else{
       setPressure(shotPressure);      
