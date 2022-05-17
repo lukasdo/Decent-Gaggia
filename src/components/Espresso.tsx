@@ -10,6 +10,7 @@ interface IMessage {
     brewTemp: number;
     pressure: number;
     brewTime: number;
+    shotGrams: number;
 }
 
 interface IProps {
@@ -25,6 +26,7 @@ interface IState {
     data: ChartComponentProps;
     startUp: boolean;
     wsConnected: boolean;
+    shotGrams: number[];
 
 }
 
@@ -32,7 +34,7 @@ const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     elements: {
-        point:{
+        point: {
             radius: 0
         }
     },
@@ -41,20 +43,20 @@ const chartOptions = {
             position: "right",
             "id": "pressure",
             gridLines: {
-                display:false
+                display: false
             },
             ticks: {
                 suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
                 maxTicksLimit: 5,
             }
-          }, {
+        }, {
             position: "left",
             "id": "temp",
             ticks: {
                 suggestedMin: 80,    // minimum will be 0, unless there is a lower value.
                 maxTicksLimit: 5,
             }
-          }],
+        }],
         xAxes: [{
             type: 'time',
             time: {
@@ -99,6 +101,7 @@ class Espresso extends React.Component<IProps, IState> {
                 brewTime: [],
                 setPoint: 95,
                 startUp: false,
+                shotGrams: [],
                 wsConnected: false,
                 data: {
                     data: {
@@ -162,6 +165,7 @@ class Espresso extends React.Component<IProps, IState> {
                 brewTime: [...this.state.brewTime, this.getTimeString()],
                 brewTemp: [...this.state.brewTemp, message.brewTemp],
                 pressure: [...this.state.pressure, message.pressure],
+                shotGrams: [...this.state.shotGrams, message.shotGrams],
                 data: {
                     data: {
                         labels: this.state.brewTime,
@@ -172,7 +176,7 @@ class Espresso extends React.Component<IProps, IState> {
                                 backgroundColor: "rgba(75,192,192,0.2)",
                                 borderColor: "rgba(75,192,192,0.6)",
                                 yAxisID: 'temp',
-                                fill:false,
+                                fill: false,
                             },
                             {
                                 label: "Pressure",
@@ -180,7 +184,15 @@ class Espresso extends React.Component<IProps, IState> {
                                 backgroundColor: "rgba(0, 72, 255, 0.8)",
                                 borderColor: "rgba(0, 72, 255, 0.6)",
                                 yAxisID: 'pressure',
-                                fill:false,
+                                fill: false,
+                            },
+                            {
+                                label: "Weight",
+                                data: this.state.shotGrams,
+                                backgroundColor: "rgba(255, 165, 0, 0.8)",
+                                borderColor: "rgba(255, 140, 0, 0.6)",
+                                yAxisID: 'pressure',
+                                fill: false,
                             },
                         ]
                     }
@@ -208,7 +220,7 @@ class Espresso extends React.Component<IProps, IState> {
                     <div className="col-3">
                         <div className="chart-container">
 
-                        <Line ref={this.myRef} options={chartOptions} data={this.state.data.data} />
+                            <Line ref={this.myRef} options={chartOptions} data={this.state.data.data} />
                         </div>
                     </div>
                     <div className="col-1">

@@ -7,6 +7,7 @@
 #include <max6675.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
+#include <PSM.h>
 
 #include "aWOT.h"
 #include "config.h"
@@ -14,7 +15,13 @@
 
 unsigned long thermoTimer;
 unsigned long myTime;
+unsigned long shotTime;
 unsigned long wsTimer;
+unsigned long psmCounter;
+unsigned long shotGrams;
+bool shotStarted, scalesStarted;
+
+volatile unsigned int value; //dimmer value
 
 WiFiServer server(8080);
 Application app;
@@ -31,9 +38,8 @@ unsigned int isrCounter = 0; // counter for ISR
 AsyncWebSocketClient *globalClient = NULL;
 const float voltageOffset = 0.49;
 
-float pressure_bar;
-
-double Setpoint, Input, Output, temperature;
+bool brewSwitch,steamSwitch;
+double Setpoint, Input, Output, temperature, pressure_bar;
 
 // PID Values
 double Kp = kpValue, Ki = kiValue, Kd = kdValue;
@@ -70,10 +76,16 @@ void brewDetection(bool isBrewingActivated)
 //##############################################################################################################################
 void setup()
 {
-
   // relay port init and set initial operating mode
   Setpoint = espressoSetPoint;
   pinMode(relayPin, OUTPUT);
+  pinMode(pumpPin, OUTPUT);
+  pinMode(solenoidPin, OUTPUT);
+  pinMode(optoPin, INPUT);
+  pinMode(steamPin, INPUT_PULLUP);  
+  digitalWrite(pumpPin, HIGH);
+  digitalWrite(solenoidPin, LOW);
+
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED)
@@ -184,6 +196,7 @@ void kThermoRead()
     {
       if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
       {
+          Serial.println("Read temp?");
         temperature = thermocouple.readCelsius();
         thermoTimer = millis();
       }
@@ -191,29 +204,120 @@ void kThermoRead()
     }
 }
 
+
+//##############################################################################################################################
+//###########################################___________OPTOCOUPLER_READ________################################################
+//##############################################################################################################################
+void readOpto()
+{
+  brewSwitch = digitalRead(optoPin);
+}
+
+//##############################################################################################################################
+//###########################################___________STEAM_READ________######################################################
+//##############################################################################################################################
+void readSteam()
+{
+  steamSwitch = digitalRead(steamPin);  
+  if (steamSwitch == 0){
+    Setpoint = steamSetPoint;
+  }
+  else{
+    Setpoint = espressoSetPoint;
+  }
+}
+
+
 //##############################################################################################################################
 //###########################################___PRESSURE_READ____________________###############################################
 //##############################################################################################################################
 void pressureReading()
 {
-    float voltage = (analogRead(pressurePin) * 5.0) / 4096.0;
-    float pressure_pascal = (3.0 * ((float)voltage - voltageOffset)) * 1000000.0; // calibrate here
-    pressure_bar = pressure_pascal / 10e5;
-    float pressure_psi = pressure_bar * 14.5038;
+
+  const int numReadings = 16;    // number of readings to average
+  int total = 0;                  // the running total of measurements
+  int average = 0;                // the average measurement
+  const float OffSet = 0.464 ;
+  float V;  
+
+  Serial.println("Read pressure");  
+  for (int i=0; i<= numReadings; i++)
+  {
+    total = total + analogRead(pressurePin);
+    delay(1);
+  }   
+  average = total / numReadings;  
+  V = average * 3.30 / 4095;
+  pressure_bar = (((V*2)-OffSet)*4*0.62)*1.125+0.565; //Calculate water pressure. The 0.62 is the correction factor after measuring with an analogue gauge. Pressure at group head.
+  if(pressure_bar <0)
+  {
+    pressure_bar = 0;
+  }
+  float pressure_psi = pressure_bar * 14.5038;  
 }
 
+void setPressure(int wantedValue)
+{
+  pressureReading();
+  value=wantedValue;
+  value = 127 - (int)pressure_bar * 12;  
+  if (pressure_bar > (float)wantedValue) value = 0;  
+  pump.set(value);  
+}
+
+
+
+//##############################################################################################################################
+//###########################################___________READINGS________________################################################
+//##############################################################################################################################
 void readings() {
     // Reading the temperature every 350ms between the loops
-
-
+  shotGrams = psmCounter*psmToGrams;
+  readOpto();
+  readSteam(); 
   if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
+        Serial.println("Measure");
         pressureReading();
         kThermoRead();
         thermoTimer = millis();
   }
-      
-
 }
+
+
+
+//##############################################################################################################################
+//###########################################___________SHOT MONITOR____________################################################
+//##############################################################################################################################
+void shotMonitor() {
+  if(!brewSwitch){
+    psmCounter = pump.getCounter();
+    if(!shotStarted){
+      shotTime = millis();      
+      psmCounter = 0;
+      shotStarted = true;
+    }   
+    if((millis() - shotTime)  < preInfusionTime*1000){
+      setPressure(preInfusionPressure);
+      pump.resetCounter();      
+    }            
+    else{
+      setPressure(shotPressure);      
+      if(pressure_bar < shotPressure - 2){
+        if(!scalesStarted){
+          pump.resetCounter();            
+        }
+      }
+      else{
+        scalesStarted = true;         
+      }
+    }           
+  }
+  else{
+    shotStarted = false;
+    scalesStarted = false;
+  }
+}
+
 
 //##############################################################################################################################
 //###########################################___________WEBSOCKET________________###############################################
@@ -225,14 +329,16 @@ void wsSendData()
   {
     StaticJsonDocument<100> payload;
 
-    payload["temp"] = temperature;
-    payload["brewTemp"] = temperature;
-    payload["pressure"] = pressure_bar;
+    payload["temp"] = temperature;        //temperature
+    payload["brewTemp"] = temperature;    //temperature
+    payload["pressure"] = pressure_bar;   //pressure_bar
+    payload["brewSwitch"] = brewSwitch;   //brew switch status
+    payload["shotGrams"] = shotGrams;     //PSM calculated weight
 
     myTime = millis() / 1000;
     payload["brewTime"] = myTime;
 
-    char buffer[100];
+    char buffer[200];
     serializeJson(payload, buffer);
 
     globalClient->text(buffer);
@@ -250,7 +356,7 @@ void loop()
   WiFiClient client = server.available();
 
   readings();
-
+  shotMonitor();
 
   if (client.connected())
   {
