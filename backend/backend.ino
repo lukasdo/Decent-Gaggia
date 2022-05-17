@@ -19,7 +19,7 @@ unsigned long shotTime;
 unsigned long wsTimer;
 unsigned long psmCounter;
 unsigned long shotGrams;
-bool shotStarted;
+bool shotStarted, scalesStarted;
 
 volatile unsigned int value; //dimmer value
 
@@ -234,7 +234,7 @@ void readSteam()
 void pressureReading()
 {
 
-  const int numReadings = 100;    // number of readings to average
+  const int numReadings = 16;    // number of readings to average
   int total = 0;                  // the running total of measurements
   int average = 0;                // the average measurement
   const float OffSet = 0.464 ;
@@ -244,6 +244,7 @@ void pressureReading()
   for (int i=0; i<= numReadings; i++)
   {
     total = total + analogRead(pressurePin);
+    delay(1);
   }   
   average = total / numReadings;  
   V = average * 3.30 / 4095;
@@ -252,7 +253,6 @@ void pressureReading()
   {
     pressure_bar = 0;
   }
-
   float pressure_psi = pressure_bar * 14.5038;  
 }
 
@@ -303,12 +303,18 @@ void shotMonitor() {
     else{
       setPressure(shotPressure);      
       if(pressure_bar < shotPressure - 2){
-        pump.resetCounter();
-      }         
+        if(!scalesStarted){
+          pump.resetCounter();            
+        }
+      }
+      else{
+        scalesStarted = true;         
+      }
     }           
   }
   else{
     shotStarted = false;
+    scalesStarted = false;
   }
 }
 
