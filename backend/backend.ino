@@ -32,7 +32,7 @@ AsyncWebSocketClient *globalClient = NULL;
 const float voltageOffset = 0.49;
 
 float pressure_bar;
-const int numReadings = 100;
+const int numReadings = 10;
 
 float readings[numReadings];      // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
@@ -55,163 +55,145 @@ MAX6675 thermocouple(thermoCLK, thermoCS, thermoDO);
 //##############################################################################################################################
 //###########################################___________BREWDETECTION________________###########################################
 //##############################################################################################################################
-void brewDetection(bool isBrewingActivated)
-{
-  if (otpimisedBrewing)
-  {
-    if (!isBrewingActivated)
-    {
-      Serial.println("Brewing activated");
-      myPID.SetTunings(kpOptimised, kiOptimised, kdOptimised);
+void brewDetection(bool isBrewingActivated) {
+    if (otpimisedBrewing) {
+        if (!isBrewingActivated) {
+            Serial.println("Brewing activated");
+            myPID.SetTunings(kpOptimised, kiOptimised, kdOptimised);
+        } else {
+            Serial.println("Brewing deactivated");
+            myPID.SetTunings(Kp, Ki, Kd);
+        }
     }
-    else
-    {
-      Serial.println("Brewing deactivated");
-      myPID.SetTunings(Kp, Ki, Kd);
-    }
-  }
 }
 
 //##############################################################################################################################
 //###########################################___________SETUP____________________###############################################
 //##############################################################################################################################
-void setup()
-{
+void setup() {
 
-  // relay port init and set initial operating mode
-  Setpoint = espressoSetPoint;
-  pinMode(relayPin, OUTPUT);
-  Serial.begin(115200);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println(WiFi.localIP());
+    // relay port init and set initial operating mode
+    Setpoint = espressoSetPoint;
+    pinMode(relayPin, OUTPUT);
+    Serial.begin(115200);
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println(WiFi.localIP());
 
-  ArduinoOTA
-      .onStart([]()
-               {
-      String type;
-      if (ArduinoOTA.getCommand() == U_FLASH)
-        type = "sketch";
-      else // U_SPIFFS
-        type = "filesystem";
+    ArduinoOTA
+            .onStart([]() {
+                String type;
+                if (ArduinoOTA.getCommand() == U_FLASH)
+                    type = "sketch";
+                else // U_SPIFFS
+                    type = "filesystem";
 
-      // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-      Serial.println("Start updating " + type); })
-      .onEnd([]()
-             { Serial.println("\nEnd"); })
-      .onProgress([](unsigned int progress, unsigned int total)
-                  { Serial.printf("Progress: %u%%\r", (progress / (total / 100))); })
-      .onError([](ota_error_t error)
-               {
-      Serial.printf("Error[%u]: ", error);
-      if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-      else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-      else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-      else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-      else if (error == OTA_END_ERROR) Serial.println("End Failed"); });
+                // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+                Serial.println("Start updating " + type);
+            })
+            .onEnd([]() { Serial.println("\nEnd"); })
+            .onProgress([](unsigned int progress, unsigned int total) {
+                Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+            })
+            .onError([](ota_error_t error) {
+                Serial.printf("Error[%u]: ", error);
+                if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+                else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+                else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+                else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+                else if (error == OTA_END_ERROR) Serial.println("End Failed");
+            });
 
-  ArduinoOTA.begin();
+    ArduinoOTA.begin();
 
-  app.route(staticFiles());
+    app.route(staticFiles());
 
-  asyncServer.on("/brewing", HTTP_POST, [](AsyncWebServerRequest *request)
-                 { 
-    bool isBrewing = false;
-   if(request->hasParam("brewing", true)) {
-    AsyncWebParameter* p = request->getParam("brewing", true); 
-    isBrewing = (p->value()  != "0");
-    brewDetection(isBrewing);
-    request->send(200);
-    } });
+    asyncServer.on("/brewing", HTTP_POST, [](AsyncWebServerRequest *request) {
+        bool isBrewing = false;
+        if (request->hasParam("brewing", true)) {
+            AsyncWebParameter *p = request->getParam("brewing", true);
+            isBrewing = (p->value() != "0");
+            brewDetection(isBrewing);
+            request->send(200);
+        }
+    });
 
-  asyncServer.onNotFound([](AsyncWebServerRequest *request)
-                         {
-  if (request->method() == HTTP_OPTIONS) {
-      AsyncWebServerResponse * response = request->beginResponse(200);
-        response->addHeader("Access-Control-Max-Age", "10000");
-        response->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
-        response->addHeader("Access-Control-Allow-Headers", "*");
-    request->send(response);
-  } else {
-    request->send(404);
-  } });
+    asyncServer.onNotFound([](AsyncWebServerRequest *request) {
+        if (request->method() == HTTP_OPTIONS) {
+            AsyncWebServerResponse *response = request->beginResponse(200);
+            response->addHeader("Access-Control-Max-Age", "10000");
+            response->addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
+            response->addHeader("Access-Control-Allow-Headers", "*");
+            request->send(response);
+        } else {
+            request->send(404);
+        }
+    });
 
-  // initialize all the readings to 0:
-  for (int thisReading = 0; thisReading < numReadings; thisReading++) {
-    readings[thisReading] = 0;
-  }
-  
-  // Enable cors
-  DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
-  server.begin();
-  asyncServer.begin();
-  webSocketServer.begin();
 
-  ws.onEvent(onWsEvent);
-  webSocketServer.addHandler(&ws);
+    // Enable cors
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    server.begin();
+    asyncServer.begin();
+    webSocketServer.begin();
 
-  thermoTimer = millis();
+    ws.onEvent(onWsEvent);
+    webSocketServer.addHandler(&ws);
 
-  // tell the PID to range between 0 and the full window size
-  myPID.SetOutputLimits(0, WindowSize);
+    thermoTimer = millis();
 
-  // turn the PID on
-  myPID.SetMode(AUTOMATIC);
+    // tell the PID to range between 0 and the full window size
+    myPID.SetOutputLimits(0, WindowSize);
 
-  initTimer1();
-  enableTimer1();
+    // turn the PID on
+    myPID.SetMode(AUTOMATIC);
+
+    initTimer1();
+    enableTimer1();
 }
 
 //##############################################################################################################################
 //###########################################___________WEBSOCKET________________###############################################
 //##############################################################################################################################
-void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
-{
-  if (type == WS_EVT_CONNECT)
-  {
-    Serial.println("Websocket client connection received");
-    globalClient = client;
-  }
-  else if (type == WS_EVT_DISCONNECT)
-  {
-    Serial.println("Websocket client connection finished");
-    globalClient = NULL;
-  }
+void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
+               size_t len) {
+    if (type == WS_EVT_CONNECT) {
+        Serial.println("Websocket client connection received");
+        globalClient = client;
+    } else if (type == WS_EVT_DISCONNECT) {
+        Serial.println("Websocket client connection finished");
+        globalClient = NULL;
+    }
 }
 
 //##############################################################################################################################
 //###########################################___________THERMOCOUPLE_READ________###############################################
 //##############################################################################################################################
-void kThermoRead()
-{
+void kThermoRead() {
     temperature = thermocouple.readCelsius();
     if (temperature == NAN) {
-      Serial.println("Are you sure there is a thermocouple connected?");
+        Serial.println("Are you sure there is a thermocouple connected?");
     } else {
-      while (temperature <= 0 || temperature > 170.0)
-    {
-      if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY)
-      {
-          Serial.println("Read temp?");
-        temperature = thermocouple.readCelsius();
-        thermoTimer = millis();
-      }
-    }
+        while (temperature <= 0 || temperature > 170.0) {
+            if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
+                Serial.println("Read temp?");
+                temperature = thermocouple.readCelsius();
+                thermoTimer = millis();
+            }
+        }
     }
 }
 
 //##############################################################################################################################
 //###########################################___PRESSURE_READ____________________###############################################
 //##############################################################################################################################
-float pressureReading()
-{
-  
+float pressureReading() {
+
     float voltage = (analogRead(pressurePin) * 5.0) / 4096.0;
-    float pressure_pascal = (3.0 * ((float)voltage - voltageOffset)) * 1000000.0; // calibrate here
+    float pressure_pascal = (3.0 * ((float) voltage - voltageOffset)) * 1000000.0; // calibrate here
     float pressure_bare = pressure_pascal / 10e5;
     return pressure_bare;
 
@@ -219,80 +201,64 @@ float pressureReading()
 
 void readDataAndSend() {
     // Reading the temperature every 350ms between the loops
-
-
-  if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
-
+    if ((millis() - thermoTimer) > GET_KTYPE_READ_EVERY) {
         kThermoRead();
-
         thermoTimer = millis();
-  }
-      
-
+    }
 }
 
 //##############################################################################################################################
 //###########################################___________WEBSOCKET________________###############################################
 //##############################################################################################################################
-void wsSendData()
-{
-  
-  if (globalClient != NULL && globalClient->status() == WS_CONNECTED && (millis() - wsTimer) > GET_KTYPE_READ_EVERY)
-  {
-    StaticJsonDocument<100> payload;
+void wsSendData() {
 
-    payload["temp"] = temperature;
-    payload["brewTemp"] = temperature;
-    payload["pressure"] = pressure_bar;
+    if (globalClient != NULL && globalClient->status() == WS_CONNECTED && (millis() - wsTimer) > GET_KTYPE_READ_EVERY) {
+        StaticJsonDocument<100> payload;
 
-    myTime = millis() / 1000;
-    payload["brewTime"] = myTime;
+        payload["temp"] = (int) temperature;
+        payload["brewTemp"] = temperature;
+        payload["pressure"] = pressure_bar;
 
-    char buffer[100];
-    serializeJson(payload, buffer);
+        myTime = millis() / 1000;
+        payload["brewTime"] = myTime;
 
-    globalClient->text(buffer);
-    
-    wsTimer = millis();
-  }
+        char buffer[100];
+        serializeJson(payload, buffer);
+
+        globalClient->text(buffer);
+
+        wsTimer = millis();
+    }
 }
 
 void smoothingPressure() {
-  total = total - readings[readIndex];
-  // read from the sensor:
-  readings[readIndex] = pressureReading();
-  // add the reading to the total:
-  total = total + readings[readIndex];
-  // advance to the next position in the array:
-  readIndex = readIndex + 1;
+    total = total - readings[readIndex];
+    // read from the sensor:
+    readings[readIndex] = pressureReading();
+    // add the reading to the total:
+    total = total + readings[readIndex];
+    // advance to the next position in the array:
+    readIndex = readIndex + 1;
 
-  // if we're at the end of the array...
-  if (readIndex >= numReadings) {
-    // ...wrap around to the beginning:
-    readIndex = 0;
-  }
-
-  // calculate the average:
-  pressure_bar = total / numReadings;
-  Serial.println(pressure_bar);
-  // send it to the computer as ASCII digits
+    // if we're at the end of the array...
+    if (readIndex >= numReadings) {
+        readIndex = 0;
+    }
+    // calculate the average:
+    pressure_bar = total / numReadings;
 
 }
 
 //##############################################################################################################################
 //###########################################___________LOOP_____________________###############################################
 //##############################################################################################################################
-void loop()
-{
-  ArduinoOTA.handle();
+void loop() {
+    ArduinoOTA.handle();
     WiFiClient client = server.available();
-          if (client.connected())
-  {
-    app.process(&client);
-  }
-  smoothingPressure();
-  readDataAndSend();
-
-  wsSendData();
-
+    if (client.connected()) {
+        app.process(&client);
+    }
+    smoothingPressure();
+    readDataAndSend();
+    wsSendData();
 }
