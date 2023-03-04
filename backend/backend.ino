@@ -32,7 +32,7 @@ AsyncWebSocketClient *globalClient = NULL;
 const float voltageOffset = 0.49;
 
 float pressure_bar;
-const int numReadings = 10;
+const int numReadings = 3;
 
 float readings[numReadings];      // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
@@ -116,6 +116,18 @@ void setup() {
             AsyncWebParameter *p = request->getParam("brewing", true);
             isBrewing = (p->value() != "0");
             brewDetection(isBrewing);
+            request->send(200);
+        }
+    });
+
+    asyncServer.on("/setPoint", HTTP_POST, [](AsyncWebServerRequest *request) {
+        bool isBrewing = false;
+        if (request->hasParam("setpoint", true)) {
+            AsyncWebParameter *p = request->getParam("setpoint", true);
+
+
+            Setpoint = p->value().toDouble();
+            Serial.println(Setpoint);
             request->send(200);
         }
     });

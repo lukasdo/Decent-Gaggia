@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import PropTypes from 'prop-types';
 import * as React from 'react';
 import Espresso from "./Espresso";
+import Config from "./Config";
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -50,12 +51,16 @@ export default function BasicTabs() {
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={value} onChange={handleChange} centered aria-label="basic tabs example">
                     <Tab label="Espresso" {...a11yProps(0)} />
-                    {/* <Tab label="Shot Timer" {...a11yProps(1)} /> */}
-                </Tabs>
+                    <Tab label="Config" {...a11yProps(1)} />
+                  </Tabs>
             </Box>
             <TabPanel value={value} index={0}>
                 <Espresso></Espresso>
             </TabPanel>
+            <TabPanel value={value} index={1}>
+                <Config></Config>
+            </TabPanel>
+
         </Box>
     );
 }
