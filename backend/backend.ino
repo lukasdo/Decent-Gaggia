@@ -37,10 +37,9 @@ const int numReadings = 10;
 float readings[numReadings];      // the readings from the analog input
 int readIndex = 0;              // the index of the current reading
 float total = 0;                  // the running total
-int average = 0;                // the average
 
 
-double Setpoint, Input, Output, temperature;
+double Setpoint, Output, temperature;
 
 // PID Values
 double Kp = kpValue, Ki = kiValue, Kd = kdValue;
